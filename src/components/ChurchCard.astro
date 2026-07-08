@@ -1,0 +1,54 @@
+---
+/**
+ * Themed directory card for one church — used on Find a Church and the
+ * homepage preview strip. Data attributes carry coordinates and city for the
+ * client-side distance sort / filters on the Find a Church page.
+ */
+import type { Church } from '../lib/churches';
+import ChurchPhoto from './ChurchPhoto.astro';
+
+interface Props {
+  church: Church;
+}
+const { church: c } = Astro.props;
+
+const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.address)}`;
+---
+
+<article
+  class="card card-accent card-hover !p-0 overflow-hidden flex flex-col church-card"
+  data-theme={c.theme}
+  data-slug={c.slug}
+  data-lat={c.lat ?? ''}
+  data-lng={c.lng ?? ''}
+  data-city={c.city}
+  data-name={c.name}
+>
+  <a href={`/churches/${c.slug}/`} class="no-underline text-inherit">
+    <ChurchPhoto photo={c.photo} alt={`${c.name} building`} aspect="aspect-[16/9]" />
+  </a>
+  <div class="p-5 flex flex-col gap-2 grow">
+    <div class="flex items-start justify-between gap-2">
+      <h3 class="!mb-0 text-[1.35rem] leading-snug">
+        <a href={`/churches/${c.slug}/`} class="no-underline" style="color: var(--text);">{c.name}</a>
+      </h3>
+      <span class="distance-pill pill-solid pill hidden whitespace-nowrap mt-1" aria-label="distance from your location"></span>
+    </div>
+    <p class="font-ui text-[0.9rem] muted !m-0">{c.address}</p>
+    {c.serviceTimes && (
+      <p class="font-ui text-[0.88rem] !m-0" style="color: var(--text);">
+        <span class="font-semibold" style="color: var(--accent);">Services:</span>
+        {c.serviceTimes}
+      </p>
+    )}
+    {c.phone && (
+      <p class="font-ui text-[0.88rem] !m-0">
+        <a href={`tel:${c.phone.replace(/[^0-9+]/g, '')}`}>{c.phone}</a>
+      </p>
+    )}
+    <div class="mt-auto pt-3 flex flex-wrap gap-2">
+      <a class="btn btn-primary !py-2 !px-4 text-[0.85rem]" href={`/churches/${c.slug}/`}>Visit page</a>
+      <a class="btn btn-ghost !py-2 !px-4 text-[0.85rem]" href={directionsUrl} rel="noopener" target="_blank">Get directions</a>
+    </div>
+  </div>
+</article>

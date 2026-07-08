@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "note": "Build-time geocoding cache: address → coordinates. Entries marked approximate:true are hand-seeded estimates for the demo data so the map works before a Geocoding API key exists; once GOOGLE_GEOCODING_API_KEY is set in .env, the build re-geocodes approximate entries and replaces them with exact rooftop coordinates. Exact CSV latitude/longitude values always win over this cache.",
+  "entries": {
+    "87927 US Highway 278, Snead, AL 35952": {
+      "lat": 34.081,
+      "lng": -86.395,
+      "approximate": true,
+      "source": "seed-estimate"
+    },
+    "270 College Street, Blountsville, AL 35031": {
+      "lat": 34.083,
+      "lng": -86.59,
+      "approximate": true,
+      "source": "seed-estimate"
+    },
+    "51070 State Highway 79, Blountsville, AL 35031": {
+      "lat": 34.16,
+      "lng": -86.51,
+      "approximate": true,
+      "source": "seed-estimate"
+    },
+    "1108 Fowler Springs Road, Blountsville, AL 35031": {
+      "lat": 34.045,
+      "lng": -86.56,
+      "approximate": true,
+      "source": "seed-estimate"
+    },
+    "8770 US Highway 31, Hayden, AL 35079": {
+      "lat": 33.932,
+      "lng": -86.752,
+      "approximate": true,
+      "source": "seed-estimate"
+    },
+    "74 Smith Mill Road, Trafford, AL 35172": {
+      "lat": 33.825,
+      "lng": -86.74,
+      "approximate": true,
+      "source": "seed-estimate"
+    }
+  }
+}

@@ -1,0 +1,135 @@
+/* ==========================================================================
+   theme.css — ALL COLOR LIVES HERE.
+   --------------------------------------------------------------------------
+   This file is the single source of truth for the site's colors, type, and
+   shape. The structural stylesheet (style.css) derives every gradient and
+   depth effect from these flat tokens with color-mix() — do not hand-author
+   gradients elsewhere; adjust the flat colors here instead.
+
+   ── Per-church themes ────────────────────────────────────────────────────
+   Each [data-theme="keyword"] block below is a color preset a church can be
+   assigned via the `theme` column of the church spreadsheet. To ADD a new
+   theme:
+
+     1. Copy the template block at the bottom of this file.
+     2. Give it a new keyword and pick an accent color.
+        ► The accent must stay fairly dark to remain readable on the cream
+          background (aim for a WCAG AA contrast of 4.5:1 or better — test
+          at https://webaim.org/resources/contrastchecker with background
+          #f4ecdd).
+     3. Use the new keyword in the spreadsheet's `theme` column.
+
+   The new theme automatically appears in the /themes showcase dropdown —
+   no other code changes are needed.
+
+   NOTE: several preset accents were darkened slightly from the original
+   design draft so every one of them meets WCAG AA contrast on the cream
+   surfaces (accent-on-cream and light-text-on-accent).
+   ========================================================================== */
+
+:root {
+  /* Surfaces — warm cream, lighter card, subtle inset */
+  --bg:             #f4ecdd;   /* page background (warm cream)            */
+  --bg-card:        #fdf9f1;   /* card surface (a step lighter than bg)   */
+  --bg-inset:       #efe4d0;   /* input fields / wells inside cards       */
+  --card-border:    #ddc9a6;   /* subtle card outline                     */
+
+  /* Text — deep warm brown-navy for readability on cream */
+  --text:           #2c3542;   /* main reading text                       */
+  --text-muted:     #5d6b7c;   /* secondary text, icons, placeholders     */
+
+  /* Accent — deep blue (site default; per-church presets override this) */
+  --accent:         #2f5d8f;   /* recolors buttons, pills, links, focus   */
+  --accent-contrast:#fdf9f1;   /* text on top of the accent color         */
+
+  --progress-track: #e3d5ba;   /* inactive progress track                 */
+  --error:          #a63d24;   /* inline validation                       */
+
+  /* Type — elegant serif + sans system (see README "Design language") */
+  --font-display:   "Cormorant Garamond", "EB Garamond", Georgia, serif;   /* headlines */
+  --font-body:      Georgia, "Iowan Old Style", "Times New Roman", serif;  /* reading text */
+  --font-ui:        "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; /* UI / nav */
+
+  /* Shape */
+  --radius:         20px;
+}
+
+/* ==========================================================================
+   The 12 church theme presets.
+   Applying data-theme="<keyword>" to any element recolors everything inside
+   it. Blank / unrecognized keywords in the spreadsheet fall back to the
+   default deep blue above.
+   ========================================================================== */
+
+[data-theme="blue"] {
+  --accent: #2f5d8f;            /* deep blue (same as site default) */
+  --accent-contrast: #fdf9f1;
+}
+
+[data-theme="forest"] {
+  --accent: #35704e;            /* deep forest green */
+  --accent-contrast: #fdf9f1;
+}
+
+[data-theme="teal"] {
+  --accent: #276b73;            /* dark teal */
+  --accent-contrast: #fdf9f1;
+}
+
+[data-theme="burgundy"] {
+  --accent: #8f3f4d;            /* burgundy */
+  --accent-contrast: #fdf9f1;
+}
+
+[data-theme="gold"] {
+  --accent: #8a5d18;            /* antique gold / bronze */
+  --accent-contrast: #fdf9f1;
+}
+
+[data-theme="plum"] {
+  --accent: #6f4d84;            /* plum */
+  --accent-contrast: #fdf9f1;
+}
+
+[data-theme="sky"] {
+  --accent: #2f6b99;            /* sky blue (deepened for contrast) */
+  --accent-contrast: #fdf9f1;
+}
+
+[data-theme="sage"] {
+  --accent: #4d6f52;            /* sage green */
+  --accent-contrast: #fdf9f1;
+}
+
+[data-theme="clay"] {
+  --accent: #96522e;            /* warm clay */
+  --accent-contrast: #fdf9f1;
+}
+
+[data-theme="navy"] {
+  --accent: #2b3f66;            /* deep navy */
+  --accent-contrast: #fdf9f1;
+}
+
+[data-theme="rose"] {
+  --accent: #9d4a62;            /* dusty rose */
+  --accent-contrast: #fdf9f1;
+}
+
+[data-theme="slate"] {
+  --accent: #4f6373;            /* blue-grey slate */
+  --accent-contrast: #fdf9f1;
+}
+
+/* ==========================================================================
+   TEMPLATE — copy this block to add a new theme (e.g. a 13th color).
+   Replace "mytheme" with a short lowercase keyword and set the accent.
+   Keep --accent dark enough to read on cream (#f4ecdd) — AA is 4.5:1.
+
+[data-theme="mytheme"] {
+  --accent: #335544;
+  --accent-contrast: #fdf9f1;
+}
+
+   Then type `mytheme` in the `theme` column of the church spreadsheet.
+   ========================================================================== */

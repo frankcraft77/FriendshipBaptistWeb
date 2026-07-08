@@ -1,0 +1,365 @@
+/* ==========================================================================
+   style.css — structural stylesheet.
+   Layout, components, and depth. This file is never edited per project:
+   every color comes from the flat tokens in theme.css, and all gradients /
+   glows are DERIVED here with color-mix() so picking good flat tokens is
+   the only design decision. Mobile-first throughout.
+   ========================================================================== */
+
+/* ── Base ──────────────────────────────────────────────────────────────── */
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+img { max-width: 100%; height: auto; display: block; }
+
+a { color: var(--accent); text-underline-offset: 3px; }
+a:hover { color: color-mix(in srgb, var(--accent), var(--text) 25%); }
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent), transparent 25%);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent), transparent 75%);
+}
+
+/* ── Typography ────────────────────────────────────────────────────────── */
+
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0 0 0.5em;
+  text-wrap: balance;
+}
+
+h1 { font-size: clamp(2.4rem, 6vw, 3.9rem); }
+h2 { font-size: clamp(1.9rem, 4.5vw, 2.7rem); }
+h3 { font-size: clamp(1.35rem, 3vw, 1.7rem); }
+h4, h5, h6 { font-family: var(--font-ui); font-weight: 600; margin: 0 0 0.5em; }
+
+.eyebrow {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 0.9rem;
+}
+
+.lede {
+  font-size: clamp(1.15rem, 2.5vw, 1.35rem);
+  line-height: 1.55;
+  color: var(--text-muted);
+  max-width: 46ch;
+}
+
+.muted { color: var(--text-muted); }
+
+.font-ui { font-family: var(--font-ui); }
+
+/* ── Layout ────────────────────────────────────────────────────────────── */
+
+.container {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+@media (min-width: 768px) { .container { padding-inline: 2rem; } }
+
+.container-narrow { max-width: 48rem; }
+.container-wide   { max-width: 84rem; }
+
+/* Generous whitespace is the design's primary luxury signal. */
+.section { padding-block: 3.5rem; }
+@media (min-width: 768px) { .section { padding-block: 5.5rem; } }
+
+.section-tight { padding-block: 2rem; }
+@media (min-width: 768px) { .section-tight { padding-block: 3rem; } }
+
+/* Alternate band: a step lighter, for quiet rhythm between sections. */
+.band {
+  background: color-mix(in srgb, var(--bg-card), var(--bg) 40%);
+  border-block: 1px solid color-mix(in srgb, var(--card-border), transparent 55%);
+}
+
+/* Accent band: full-width statement strip (IMB-style mission moments). */
+.band-accent {
+  background:
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--accent), white 6%),
+      color-mix(in srgb, var(--accent), black 14%)
+    );
+  color: var(--accent-contrast);
+}
+.band-accent h1, .band-accent h2, .band-accent h3, .band-accent p { color: var(--accent-contrast); }
+.band-accent a { color: var(--accent-contrast); }
+.band-accent .eyebrow { color: color-mix(in srgb, var(--accent-contrast), transparent 25%); }
+
+/* ── Cards ─────────────────────────────────────────────────────────────── */
+
+.card {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg-card), white 45%) 0%,
+    var(--bg-card) 55%,
+    color-mix(in srgb, var(--bg-card), var(--bg) 55%) 100%
+  );
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--text), transparent 92%),
+    0 10px 30px -18px color-mix(in srgb, var(--text), transparent 78%);
+}
+
+a.card { text-decoration: none; color: inherit; display: block; }
+a.card:hover, .card-hover:hover {
+  border-color: color-mix(in srgb, var(--accent), var(--card-border) 45%);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--text), transparent 90%),
+    0 16px 40px -18px color-mix(in srgb, var(--accent), transparent 70%);
+  transition: box-shadow 180ms ease, border-color 180ms ease;
+}
+
+/* Accent-topped card: the themed church cards in the directory. */
+.card-accent {
+  border-top: 5px solid var(--accent);
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+
+.well {
+  background: var(--bg-inset);
+  border: 1px solid color-mix(in srgb, var(--card-border), transparent 35%);
+  border-radius: calc(var(--radius) * 0.75);
+  padding: 1.25rem;
+}
+
+/* ── Buttons & pills ───────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  padding: 0.8rem 1.5rem;
+  border-radius: calc(var(--radius) * 0.6);
+  border: 1px solid transparent;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.btn-primary {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent), white 12%),
+    color-mix(in srgb, var(--accent), black 10%)
+  );
+  color: var(--accent-contrast);
+  box-shadow: 0 8px 22px -10px color-mix(in srgb, var(--accent), transparent 35%);
+}
+.btn-primary:hover { filter: brightness(1.07); color: var(--accent-contrast); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent), transparent 45%);
+}
+.btn-ghost:hover {
+  background: color-mix(in srgb, var(--accent), transparent 92%);
+  color: var(--accent);
+}
+
+.btn-on-accent {
+  background: var(--accent-contrast);
+  color: var(--accent);
+}
+.btn-on-accent:hover { filter: brightness(0.97); color: var(--accent); }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent), transparent 89%);
+  color: color-mix(in srgb, var(--accent), var(--text) 15%);
+  border: 1px solid color-mix(in srgb, var(--accent), transparent 70%);
+}
+
+.pill-solid {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: transparent;
+}
+
+/* "Sample" tag used while SAMPLE_CONTENT is on. */
+.tag-sample {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--error), transparent 88%);
+  color: var(--error);
+  border: 1px dashed color-mix(in srgb, var(--error), transparent 55%);
+  vertical-align: middle;
+}
+
+/* ── Forms ─────────────────────────────────────────────────────────────── */
+
+.input, input[type="text"], input[type="email"], input[type="tel"],
+input[type="search"], select, textarea {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--bg-inset);
+  border: 1px solid var(--card-border);
+  border-radius: calc(var(--radius) * 0.55);
+  padding: 0.75rem 1rem;
+  width: 100%;
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
+input:focus, select:focus, textarea:focus {
+  outline: 3px solid color-mix(in srgb, var(--accent), transparent 60%);
+  outline-offset: 0;
+  border-color: var(--accent);
+}
+
+label { font-family: var(--font-ui); font-weight: 600; font-size: 0.9rem; }
+
+/* ── Header / nav ──────────────────────────────────────────────────────── */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--bg-card), transparent 8%);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid color-mix(in srgb, var(--card-border), transparent 40%);
+}
+
+.site-nav a {
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+}
+.site-nav a:hover { background: color-mix(in srgb, var(--accent), transparent 91%); color: var(--accent); }
+.site-nav a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+
+/* ── Footer ────────────────────────────────────────────────────────────── */
+
+.site-footer {
+  background: color-mix(in srgb, var(--text), black 20%);
+  color: color-mix(in srgb, var(--bg), white 30%);
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+}
+.site-footer a { color: color-mix(in srgb, var(--bg), white 30%); text-decoration: none; }
+.site-footer a:hover { color: white; text-decoration: underline; }
+.site-footer h3 {
+  color: white;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ── Prose (markdown-rendered editorial content) ───────────────────────── */
+
+.prose { max-width: 65ch; }
+.prose p { margin: 0 0 1.1em; }
+.prose h2 { margin-top: 1.6em; }
+.prose h3 { margin-top: 1.4em; }
+.prose ul, .prose ol { padding-left: 1.4rem; margin: 0 0 1.1em; }
+.prose li { margin-bottom: 0.35em; }
+.prose blockquote {
+  margin: 1.5em 0;
+  padding: 0.25em 0 0.25em 1.25rem;
+  border-left: 3px solid var(--accent);
+  color: var(--text-muted);
+  font-style: italic;
+}
+.prose hr { border: none; border-top: 1px solid var(--card-border); margin: 2.5em 0; }
+
+/* ── Misc ──────────────────────────────────────────────────────────────── */
+
+.avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent), transparent 82%),
+    color-mix(in srgb, var(--accent), transparent 92%)
+  );
+  border: 1px solid color-mix(in srgb, var(--accent), transparent 70%);
+  color: var(--accent);
+  border-radius: 50%;
+}
+
+.notice {
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  background: color-mix(in srgb, var(--accent), transparent 91%);
+  border: 1px solid color-mix(in srgb, var(--accent), transparent 70%);
+  border-radius: calc(var(--radius) * 0.6);
+  padding: 0.85rem 1.15rem;
+  color: color-mix(in srgb, var(--accent), var(--text) 30%);
+}
+
+.divider { border: none; border-top: 1px solid var(--card-border); margin: 0; }
+
+/* Subtle entrance animation — calm, not flashy. Respect reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in-up { animation: fadeInUp 600ms ease both; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+}
+
+/* Screen-reader-only helper */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}

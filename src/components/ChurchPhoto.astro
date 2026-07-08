@@ -1,0 +1,42 @@
+---
+/**
+ * Church photo with graceful placeholder: renders the real photo when the
+ * spreadsheet has one, otherwise an elegant typographic/icon treatment in
+ * the church's theme color. Never a broken image.
+ */
+import { resolvePhoto } from '../lib/photos';
+
+interface Props {
+  photo?: string;
+  alt: string;
+  /** tailwind aspect class, e.g. "aspect-[16/9]" */
+  aspect?: string;
+  class?: string;
+  width?: number;
+  loading?: 'lazy' | 'eager';
+}
+
+const { photo, alt, aspect = 'aspect-[16/9]', class: className = '', width = 1200, loading = 'lazy' } = Astro.props;
+const src = resolvePhoto(photo, width);
+---
+
+{src ? (
+  <div class={`${aspect} overflow-hidden ${className}`}>
+    <img src={src} alt={alt} loading={loading} class="w-full h-full object-cover" />
+  </div>
+) : (
+  <div
+    class={`${aspect} overflow-hidden flex items-center justify-center ${className}`}
+    style="background: linear-gradient(160deg, color-mix(in srgb, var(--accent), transparent 78%), color-mix(in srgb, var(--accent), transparent 92%));"
+    role="img"
+    aria-label={`${alt} (photo coming soon)`}
+  >
+    <svg viewBox="0 0 64 64" class="w-14 h-14 opacity-60" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M32 6v10" />
+      <path d="M26 10h12" />
+      <path d="M16 34 32 20l16 14" />
+      <path d="M20 32v22h24V32" />
+      <path d="M28 54v-10a4 4 0 0 1 8 0v10" />
+    </svg>
+  </div>
+)}

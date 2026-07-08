@@ -1,0 +1,73 @@
+---
+import { ASSOCIATION } from '../config';
+
+interface Props {
+  currentPath: string;
+}
+const { currentPath } = Astro.props;
+
+const links = [
+  { href: '/find-a-church/', label: 'Find a Church' },
+  { href: '/about/', label: 'About' },
+  { href: '/ministries/', label: 'Ministries' },
+  { href: '/events/', label: 'Events' },
+  { href: '/missions/', label: 'Get Involved' },
+  { href: '/news/', label: 'News' },
+  { href: '/resources/', label: 'Resources' },
+  { href: '/give/', label: 'Give' },
+  { href: '/contact/', label: 'Contact' },
+];
+
+const isCurrent = (href: string) =>
+  currentPath === href || (href !== '/' && currentPath.startsWith(href));
+---
+
+<a href="#main" class="sr-only">Skip to main content</a>
+<header class="site-header">
+  <div class="container flex items-center justify-between gap-4 py-3">
+    <a href="/" class="flex items-center gap-3 no-underline" aria-label={`${ASSOCIATION.name} — home`}>
+      <img src="/favicon.svg" alt="" width="38" height="38" class="rounded-[10px]" />
+      <span class="leading-tight">
+        <span class="block font-ui font-bold text-[0.98rem] tracking-tight" style="color: var(--text);">Friendship Baptist</span>
+        <span class="block font-ui text-[0.72rem] uppercase tracking-[0.13em]" style="color: var(--text-muted);">Association · Blount County, AL</span>
+      </span>
+    </a>
+
+    <nav class="site-nav hidden xl:flex items-center gap-0.5" aria-label="Main">
+      {links.map((l) => (
+        <a href={l.href} aria-current={isCurrent(l.href) ? 'page' : undefined}>{l.label}</a>
+      ))}
+    </nav>
+
+    <button
+      id="nav-toggle"
+      class="xl:hidden inline-flex flex-col justify-center items-center w-11 h-11 rounded-xl border cursor-pointer"
+      style="border-color: var(--card-border); background: var(--bg-inset);"
+      aria-expanded="false"
+      aria-controls="mobile-nav"
+      aria-label="Open menu"
+    >
+      <span class="block w-5 h-0.5 mb-1" style="background: var(--text);"></span>
+      <span class="block w-5 h-0.5 mb-1" style="background: var(--text);"></span>
+      <span class="block w-5 h-0.5" style="background: var(--text);"></span>
+    </button>
+  </div>
+
+  <nav id="mobile-nav" class="site-nav hidden xl:!hidden border-t" style="border-color: var(--card-border);" aria-label="Main menu">
+    <div class="container flex flex-col py-3">
+      {links.map((l) => (
+        <a href={l.href} class="py-2.5 text-base" aria-current={isCurrent(l.href) ? 'page' : undefined}>{l.label}</a>
+      ))}
+    </div>
+  </nav>
+</header>
+
+<script>
+  const toggle = document.getElementById('nav-toggle');
+  const menu = document.getElementById('mobile-nav');
+  toggle?.addEventListener('click', () => {
+    const open = menu?.classList.toggle('hidden') === false;
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  });
+</script>

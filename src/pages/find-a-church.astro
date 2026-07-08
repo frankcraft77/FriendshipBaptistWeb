@@ -1,0 +1,390 @@
+---
+import Base from '../layouts/Base.astro';
+import ChurchCard from '../components/ChurchCard.astro';
+import { loadChurches } from '../lib/churches';
+import { THEME_ACCENTS } from '../lib/themes';
+import { ENV, MAP_DEFAULT_CENTER, MAP_DEFAULT_ZOOM, ASSOCIATION } from '../config';
+
+const { churches } = await loadChurches();
+const cities = [...new Set(churches.map((c) => c.city).filter(Boolean))].sort();
+
+// Everything the client-side tool needs, serialized once.
+const clientData = {
+  mapsApiKey: ENV.mapsApiKey,
+  defaultCenter: MAP_DEFAULT_CENTER,
+  defaultZoom: MAP_DEFAULT_ZOOM,
+  themeAccents: THEME_ACCENTS,
+  churches: churches.map((c) => ({
+    name: c.name,
+    slug: c.slug,
+    address: c.address,
+    lat: c.lat,
+    lng: c.lng,
+    theme: c.theme,
+    serviceTimes: c.serviceTimes,
+    city: c.city,
+  })),
+};
+---
+
+<Base
+  title={`Find a Church — ${ASSOCIATION.name}`}
+  description={`Find the ${ASSOCIATION.churchCount} Friendship Baptist Association churches nearest you in Blount County, Alabama — search by address or use your location.`}
+>
+  <section class="section-tight band">
+    <div class="container">
+      <p class="eyebrow">Churches near me</p>
+      <h1>Find a church near you</h1>
+      <p class="lede !max-w-[58ch]">
+        Type your address or use your location, and we'll sort our member
+        churches by distance — or browse the whole family of churches below.
+      </p>
+
+      <div class="mt-8 grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-center max-w-3xl font-ui">
+        <div>
+          <label for="address-input" class="sr-only">Type your address</label>
+          <input
+            id="address-input"
+            type="text"
+            placeholder="Type your address (e.g. 123 Main St, Oneonta)"
+            autocomplete="off"
+          />
+        </div>
+        <button id="geolocate-btn" class="btn btn-primary" type="button">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+          Use my location
+        </button>
+        <button id="clear-location-btn" class="btn btn-ghost hidden" type="button">Clear</button>
+      </div>
+
+      <div id="tool-notice" class="notice mt-4 hidden max-w-3xl" role="status"></div>
+
+      <div class="mt-6 flex flex-wrap items-center gap-3 font-ui">
+        <div id="view-toggle" class="inline-flex rounded-full border p-1" style="border-color: var(--card-border); background: var(--bg-inset);" role="group" aria-label="View">
+          <button id="view-list-btn" class="btn !py-1.5 !px-4 text-[0.85rem] rounded-full" type="button" aria-pressed="true">List</button>
+          <button id="view-map-btn" class="btn !py-1.5 !px-4 text-[0.85rem] rounded-full" type="button" aria-pressed="false">Map</button>
+        </div>
+        <label for="city-filter" class="text-[0.85rem] muted">Browse by town:</label>
+        <select id="city-filter" class="!w-auto !py-1.5">
+          <option value="">All towns</option>
+          {cities.map((city) => <option value={city}>{city}</option>)}
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-tight">
+    <div class="container container-wide">
+      <div id="map-panel" class="hidden">
+        <div
+          id="map"
+          class="w-full rounded-[var(--radius)] border"
+          style="height: min(70vh, 620px); border-color: var(--card-border); background: var(--bg-inset);"
+        >
+        </div>
+        <p class="font-ui text-[0.8rem] muted mt-2">
+          Pin colors match each church's page theme. Click a pin for details.
+        </p>
+      </div>
+
+      <div id="list-panel">
+        <p id="result-count" class="font-ui text-[0.9rem] muted mb-5" role="status"></p>
+        <div id="church-grid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {churches.map((c) => <ChurchCard church={c} />)}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script type="application/json" id="church-data" set:html={JSON.stringify(clientData)} />
+
+  <script>
+    // ─── "Churches Near Me" tool ─────────────────────────────────────────
+    const data = JSON.parse(document.getElementById('church-data')!.textContent!);
+    const hasMapsKey = !!data.mapsApiKey;
+
+    const els = {
+      addressInput: document.getElementById('address-input') as HTMLInputElement,
+      geolocateBtn: document.getElementById('geolocate-btn')!,
+      clearBtn: document.getElementById('clear-location-btn')!,
+      notice: document.getElementById('tool-notice')!,
+      viewListBtn: document.getElementById('view-list-btn')!,
+      viewMapBtn: document.getElementById('view-map-btn')!,
+      mapPanel: document.getElementById('map-panel')!,
+      listPanel: document.getElementById('list-panel')!,
+      grid: document.getElementById('church-grid')!,
+      cityFilter: document.getElementById('city-filter') as HTMLSelectElement,
+      resultCount: document.getElementById('result-count')!,
+    };
+
+    let map: any = null;
+    let markers: Record<string, any> = {};
+    let userMarker: any = null;
+    let userLocation: { lat: number; lng: number } | null = null;
+    let infoWindow: any = null;
+
+    function showNotice(msg: string) {
+      els.notice.textContent = msg;
+      els.notice.classList.remove('hidden');
+    }
+    function hideNotice() {
+      els.notice.classList.add('hidden');
+    }
+
+    // ── distance ──
+    function haversineMiles(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+      const R = 3958.8;
+      const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+      const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+      const la1 = (a.lat * Math.PI) / 180;
+      const la2 = (b.lat * Math.PI) / 180;
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(h));
+    }
+
+    function cards(): HTMLElement[] {
+      return Array.from(els.grid.querySelectorAll<HTMLElement>('.church-card'));
+    }
+
+    function distanceFor(card: HTMLElement): number | null {
+      if (!userLocation) return null;
+      const lat = parseFloat(card.dataset.lat || '');
+      const lng = parseFloat(card.dataset.lng || '');
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+      return haversineMiles(userLocation, { lat, lng });
+    }
+
+    function refreshList() {
+      const city = els.cityFilter.value;
+      const list = cards();
+
+      // sort: distance when a location is set, else A→Z
+      const sorted = list.slice().sort((c1, c2) => {
+        if (userLocation) {
+          const d1 = distanceFor(c1) ?? Infinity;
+          const d2 = distanceFor(c2) ?? Infinity;
+          if (d1 !== d2) return d1 - d2;
+        }
+        return (c1.dataset.name || '').localeCompare(c2.dataset.name || '');
+      });
+
+      let visible = 0;
+      for (const card of sorted) {
+        els.grid.appendChild(card); // re-append in sorted order
+        const matches = !city || card.dataset.city === city;
+        card.classList.toggle('hidden', !matches);
+        if (matches) visible++;
+
+        const pill = card.querySelector<HTMLElement>('.distance-pill');
+        const d = distanceFor(card);
+        if (pill) {
+          if (d !== null && matches) {
+            pill.textContent = d < 10 ? `${d.toFixed(1)} mi` : `${Math.round(d)} mi`;
+            pill.classList.remove('hidden');
+          } else {
+            pill.classList.add('hidden');
+          }
+        }
+      }
+
+      els.resultCount.textContent =
+        `${visible} church${visible === 1 ? '' : 'es'}` +
+        (city ? ` in ${city}` : '') +
+        (userLocation ? ', sorted nearest first' : ', A to Z');
+    }
+
+    function setUserLocation(loc: { lat: number; lng: number } | null, label?: string) {
+      userLocation = loc;
+      els.clearBtn.classList.toggle('hidden', !loc);
+      refreshList();
+      if (map) updateMapForLocation(label);
+    }
+
+    // ── view toggle (remembered for the session) ──
+    function setView(view: 'list' | 'map') {
+      const mapMode = view === 'map' && hasMapsKey;
+      els.mapPanel.classList.toggle('hidden', !mapMode);
+      els.listPanel.classList.toggle('hidden', mapMode);
+      els.viewMapBtn.setAttribute('aria-pressed', String(mapMode));
+      els.viewListBtn.setAttribute('aria-pressed', String(!mapMode));
+      (els.viewMapBtn as HTMLElement).classList.toggle('btn-primary', mapMode);
+      (els.viewListBtn as HTMLElement).classList.toggle('btn-primary', !mapMode);
+      try { sessionStorage.setItem('fba-view', mapMode ? 'map' : 'list'); } catch {}
+      if (mapMode && map) (window as any).google?.maps?.event?.trigger(map, 'resize');
+    }
+
+    els.viewListBtn.addEventListener('click', () => setView('list'));
+    els.viewMapBtn.addEventListener('click', () => {
+      if (!hasMapsKey) {
+        showNotice('The interactive map needs a Google Maps key that hasn’t been set up yet — here’s the full list instead.');
+        return;
+      }
+      setView('map');
+    });
+
+    // ── city filter ──
+    els.cityFilter.addEventListener('change', () => {
+      refreshList();
+      if (map) {
+        const city = els.cityFilter.value;
+        for (const c of data.churches) {
+          const m = markers[c.slug];
+          if (m) m.setMap(!city || c.city === city ? map : null);
+        }
+      }
+    });
+
+    // ── geolocation ──
+    els.geolocateBtn.addEventListener('click', () => {
+      if (!('geolocation' in navigator)) {
+        showNotice('Your browser doesn’t support location. Try typing your address instead.');
+        return;
+      }
+      hideNotice();
+      els.geolocateBtn.setAttribute('disabled', 'true');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          els.geolocateBtn.removeAttribute('disabled');
+          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }, 'Your location');
+        },
+        () => {
+          els.geolocateBtn.removeAttribute('disabled');
+          showNotice('We couldn’t get your location (that’s okay!). Type your address above, or browse the list below.');
+        },
+        { timeout: 10000 }
+      );
+    });
+
+    els.clearBtn.addEventListener('click', () => {
+      setUserLocation(null);
+      els.addressInput.value = '';
+      hideNotice();
+      if (userMarker) { userMarker.setMap(null); userMarker = null; }
+      if (map) fitAllChurches();
+    });
+
+    // ── Google Maps (loaded only when a key exists) ──
+    function pinSvg(color: string) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 52" width="34" height="44"><path d="M20 1C9.6 1 1.5 9.2 1.5 19.4 1.5 33 20 51 20 51s18.5-18 18.5-31.6C38.5 9.2 30.4 1 20 1z" fill="${color}" stroke="#fdf9f1" stroke-width="2"/><g stroke="#fdf9f1" stroke-width="3" stroke-linecap="round"><line x1="20" y1="10" x2="20" y2="30"/><line x1="13" y1="17" x2="27" y2="17"/></g></svg>`;
+      return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+    }
+
+    function fitAllChurches() {
+      const g = (window as any).google;
+      const bounds = new g.maps.LatLngBounds();
+      let any = false;
+      for (const c of data.churches) {
+        if (c.lat != null && c.lng != null) { bounds.extend({ lat: c.lat, lng: c.lng }); any = true; }
+      }
+      if (any) map.fitBounds(bounds, 48);
+    }
+
+    function updateMapForLocation(label?: string) {
+      const g = (window as any).google;
+      if (!g || !map) return;
+      if (userMarker) { userMarker.setMap(null); userMarker = null; }
+      if (!userLocation) return;
+
+      userMarker = new g.maps.Marker({
+        position: userLocation,
+        map,
+        title: label || 'You are here',
+        zIndex: 999,
+        icon: {
+          path: g.maps.SymbolPath.CIRCLE,
+          scale: 9,
+          fillColor: '#2c3542',
+          fillOpacity: 1,
+          strokeColor: '#fdf9f1',
+          strokeWeight: 3,
+        },
+      });
+
+      // Fit the visitor plus the nearest few churches.
+      const withDist = data.churches
+        .filter((c: any) => c.lat != null)
+        .map((c: any) => ({ c, d: haversineMiles(userLocation!, c) }))
+        .sort((a: any, b: any) => a.d - b.d)
+        .slice(0, 4);
+      const bounds = new g.maps.LatLngBounds();
+      bounds.extend(userLocation);
+      for (const { c } of withDist) bounds.extend({ lat: c.lat, lng: c.lng });
+      map.fitBounds(bounds, 64);
+    }
+
+    function initMap() {
+      const g = (window as any).google;
+      map = new g.maps.Map(document.getElementById('map'), {
+        center: data.defaultCenter,
+        zoom: data.defaultZoom,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+      });
+      infoWindow = new g.maps.InfoWindow();
+
+      for (const c of data.churches) {
+        if (c.lat == null || c.lng == null) continue;
+        const accent = data.themeAccents[c.theme] || '#2f5d8f';
+        const marker = new g.maps.Marker({
+          position: { lat: c.lat, lng: c.lng },
+          map,
+          title: c.name,
+          icon: { url: pinSvg(accent), scaledSize: new g.maps.Size(34, 44), anchor: new g.maps.Point(17, 44) },
+        });
+        marker.addListener('click', () => {
+          const dist = userLocation ? haversineMiles(userLocation, { lat: c.lat, lng: c.lng }) : null;
+          infoWindow.setContent(
+            `<div style="font-family: Inter, sans-serif; max-width: 230px; color: #2c3542;">
+              <strong style="font-size: 1rem;">${c.name}</strong><br>
+              <span style="font-size: 0.85rem;">${c.address}</span><br>
+              ${c.serviceTimes ? `<span style="font-size: 0.8rem; color: #5d6b7c;">${c.serviceTimes}</span><br>` : ''}
+              ${dist !== null ? `<span style="font-size: 0.85rem; font-weight: 600; color: ${accent};">${dist.toFixed(1)} miles away</span><br>` : ''}
+              <a href="/churches/${c.slug}/" style="color: ${accent}; font-weight: 600; font-size: 0.9rem;">Visit church page →</a>
+            </div>`
+          );
+          infoWindow.open(map, marker);
+        });
+        markers[c.slug] = marker;
+      }
+      fitAllChurches();
+
+      // Places Autocomplete on the address box.
+      if (g.maps.places?.Autocomplete) {
+        const ac = new g.maps.places.Autocomplete(els.addressInput, {
+          fields: ['geometry', 'formatted_address'],
+          componentRestrictions: { country: 'us' },
+        });
+        ac.addListener('place_changed', () => {
+          const place = ac.getPlace();
+          const loc = place?.geometry?.location;
+          if (loc) {
+            hideNotice();
+            setUserLocation({ lat: loc.lat(), lng: loc.lng() }, place.formatted_address);
+          }
+        });
+      }
+    }
+
+    if (hasMapsKey) {
+      (window as any).__fbaInitMap = initMap;
+      const s = document.createElement('script');
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(data.mapsApiKey)}&libraries=places&callback=__fbaInitMap`;
+      s.async = true;
+      s.onerror = () => showNotice('The map couldn’t load right now — the church list below still works.');
+      document.head.appendChild(s);
+    } else {
+      showNotice('Address search and the map will turn on once a Google Maps key is added (see README). Meanwhile, browse the full church list below.');
+      els.addressInput.placeholder = 'Address search available soon — browse the list below';
+      els.addressInput.setAttribute('disabled', 'true');
+    }
+
+    // initial state
+    let initialView: 'list' | 'map' = 'list';
+    try {
+      if (sessionStorage.getItem('fba-view') === 'map' && hasMapsKey) initialView = 'map';
+    } catch {}
+    setView(initialView);
+    refreshList();
+  </script>
+</Base>

@@ -1,0 +1,39 @@
+---
+/**
+ * Sitewide "sample content" banner — shows only while SAMPLE_CONTENT is true
+ * in src/config.ts. Dismissible per browser (remembered in localStorage).
+ */
+import { SAMPLE_CONTENT } from '../config';
+---
+
+{SAMPLE_CONTENT && (
+  <div
+    id="sample-banner"
+    class="hidden font-ui text-[0.85rem] text-center px-4 py-2"
+    style="background: color-mix(in srgb, var(--error), transparent 88%); color: var(--error); border-bottom: 1px dashed color-mix(in srgb, var(--error), transparent 55%);"
+    role="status"
+  >
+    <span>
+      <strong>Sample content</strong> — this is a planning preview. Page copy is
+      realistic placeholder text for the owner to review and replace.
+    </span>
+    <button
+      id="sample-banner-dismiss"
+      class="ml-3 underline cursor-pointer bg-transparent border-0 p-0 font-ui text-[0.85rem]"
+      style="color: var(--error);"
+    >Dismiss</button>
+  </div>
+)}
+
+{SAMPLE_CONTENT && (
+  <script>
+    const banner = document.getElementById('sample-banner');
+    if (banner && !localStorage.getItem('fba-sample-banner-dismissed')) {
+      banner.classList.remove('hidden');
+    }
+    document.getElementById('sample-banner-dismiss')?.addEventListener('click', () => {
+      banner?.classList.add('hidden');
+      localStorage.setItem('fba-sample-banner-dismissed', '1');
+    });
+  </script>
+)}

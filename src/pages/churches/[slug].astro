@@ -1,0 +1,283 @@
+---
+/**
+ * Church mini-site — one full landing page per church at /churches/<slug>.
+ * The whole page is driven by that church's spreadsheet row: the core
+ * sections always render, and each enrichment section appears only when its
+ * column has data, so churches can grow their page over time with no code
+ * changes. The page-wide color theme comes from the `theme` column.
+ */
+import Base from '../../layouts/Base.astro';
+import ChurchPhoto from '../../components/ChurchPhoto.astro';
+import { loadChurches } from '../../lib/churches';
+import { resolvePhoto } from '../../lib/photos';
+import { ASSOCIATION } from '../../config';
+
+export async function getStaticPaths() {
+  const { churches } = await loadChurches();
+  return churches.map((church, i) => ({
+    params: { slug: church.slug },
+    props: {
+      church,
+      prev: churches[(i - 1 + churches.length) % churches.length],
+      next: churches[(i + 1) % churches.length],
+    },
+  }));
+}
+
+const { church: c, prev, next } = Astro.props;
+
+const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.address)}`;
+const mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${c.name}, ${c.address}`)}&z=14&output=embed`;
+const heroPhoto = resolvePhoto(c.photo, 1600);
+const ogImage = heroPhoto || undefined;
+
+const description = c.about
+  ? c.about.replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim().slice(0, 160)
+  : `${c.name} — a ${ASSOCIATION.name} church at ${c.address}. Service times, directions, and contact information.`;
+
+const paragraphs = (text: string) => text.split(/\n+/).map((p) => p.trim()).filter(Boolean);
+
+// YouTube links become inline embeds; everything else gets a button.
+function youtubeEmbed(url: string): string | null {
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{6,})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}` : null;
+}
+const livestreamEmbed = c.livestreamUrl ? youtubeEmbed(c.livestreamUrl) : null;
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Church',
+  name: c.name,
+  address: c.address,
+  ...(c.phone ? { telephone: c.phone } : {}),
+  ...(c.website ? { url: c.website } : {}),
+  ...(heroPhoto ? { image: new URL(heroPhoto, Astro.site).href } : {}),
+};
+---
+
+<Base title={`${c.name} — ${ASSOCIATION.name}`} description={description} theme={c.theme} ogImage={ogImage}>
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+
+  {/* ── Hero ── */}
+  <section class="relative">
+    <ChurchPhoto photo={c.photo} alt={`${c.name} building`} aspect="aspect-[16/7] min-h-[300px] max-h-[480px]" loading="eager" />
+    <div class="absolute inset-0 flex items-end" style="background: linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--text), transparent 25%) 100%);">
+      <div class="container pb-8 md:pb-12">
+        <p class="font-ui text-[0.78rem] font-semibold uppercase tracking-[0.14em] !mb-2" style="color: color-mix(in srgb, var(--bg-card), transparent 20%);">
+          A {ASSOCIATION.name} church
+        </p>
+        <h1 class="!mb-3" style="color: #fdf9f1; text-shadow: 0 2px 18px rgba(0,0,0,0.45);">{c.name}</h1>
+        <p class="font-ui !mb-5" style="color: color-mix(in srgb, #fdf9f1, transparent 10%); text-shadow: 0 1px 10px rgba(0,0,0,0.5);">{c.address}</p>
+        <div class="flex flex-wrap gap-3">
+          <a class="btn btn-primary" href={directionsUrl} rel="noopener" target="_blank">Get directions</a>
+          {c.livestreamUrl && <a class="btn btn-on-accent" href={c.livestreamUrl} rel="noopener" target="_blank">Watch online</a>}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ── Service times + contact ── */}
+  <section class="section-tight band">
+    <div class="container grid gap-6 md:grid-cols-2">
+      {c.serviceTimes && (
+        <div class="card card-accent">
+          <p class="eyebrow !mb-2">Service times</p>
+          <ul class="list-none p-0 m-0 space-y-1.5 font-ui text-[1.02rem]">
+            {c.serviceTimes.split(';').map((t) => (
+              <li class="flex gap-2 items-baseline">
+                <span aria-hidden="true" style="color: var(--accent);">●</span>
+                <span>{t.trim()}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div class="card card-accent">
+        <p class="eyebrow !mb-2">Contact</p>
+        <ul class="list-none p-0 m-0 space-y-1.5 font-ui text-[0.98rem]">
+          {c.pastor && <li><strong>Pastor:</strong> {c.pastor}</li>}
+          {c.phone && <li><strong>Phone:</strong> <a href={`tel:${c.phone.replace(/[^0-9+]/g, '')}`}>{c.phone}</a></li>}
+          {c.email && <li><strong>Email:</strong> <a href={`mailto:${c.email}`}>{c.email}</a></li>}
+          {c.website && <li><strong>Website:</strong> <a href={c.website} rel="noopener" target="_blank">{c.website.replace(/^https?:\/\//, '')}</a></li>}
+          {c.facebook && <li><strong>Facebook:</strong> <a href={c.facebook} rel="noopener" target="_blank">Visit our page</a></li>}
+          {!c.pastor && !c.phone && !c.email && !c.website && !c.facebook && (
+            <li class="muted">Contact details coming soon — see the association office on our <a href="/contact/">Contact page</a>.</li>
+          )}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  {/* ── About ── */}
+  {c.about && (
+    <section class="section">
+      <div class="container container-narrow">
+        <p class="eyebrow">About this church</p>
+        <h2>Who we are</h2>
+        <div class="prose">
+          {paragraphs(c.about).map((p) => <p>{p}</p>)}
+        </div>
+        {c.denominationNote && <p class="font-ui text-[0.9rem] muted mt-4">{c.denominationNote}</p>}
+      </div>
+    </section>
+  )}
+
+  {/* ── Photo gallery ── */}
+  {c.photos.length > 0 && (
+    <section class="section-tight">
+      <div class="container">
+        <p class="eyebrow">Gallery</p>
+        <div class="grid gap-4 grid-cols-2 md:grid-cols-3">
+          {c.photos.map((p, i) => (
+            <ChurchPhoto photo={p} alt={`${c.name} — photo ${i + 1}`} aspect="aspect-[4/3]" class="rounded-[calc(var(--radius)*0.6)]" />
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* ── Meet the pastor ── */}
+  {(c.pastorBio || (c.pastor && c.pastorPhoto)) && (
+    <section class="section band">
+      <div class="container container-narrow">
+        <p class="eyebrow">Meet the pastor</p>
+        <div class="flex flex-col sm:flex-row gap-6 items-start">
+          {c.pastorPhoto ? (
+            <ChurchPhoto photo={c.pastorPhoto} alt={`Pastor ${c.pastor || ''}`.trim()} aspect="aspect-square" class="rounded-full w-36 shrink-0" width={400} />
+          ) : (
+            <div class="avatar-placeholder w-36 h-36 shrink-0 text-4xl font-ui" aria-hidden="true">
+              {(c.pastor || '?').charAt(0)}
+            </div>
+          )}
+          <div>
+            {c.pastor && <h2 class="!mb-2">{c.pastor}</h2>}
+            <div class="prose">{paragraphs(c.pastorBio).map((p) => <p>{p}</p>)}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* ── Plan your visit ── */}
+  {c.planYourVisit && (
+    <section class="section">
+      <div class="container container-narrow">
+        <p class="eyebrow">Plan your visit</p>
+        <h2>What to expect</h2>
+        <div class="prose">{paragraphs(c.planYourVisit).map((p) => <p>{p}</p>)}</div>
+      </div>
+    </section>
+  )}
+
+  {/* ── Beliefs ── */}
+  {c.beliefs && (
+    <section class="section-tight">
+      <div class="container container-narrow">
+        <div class="well">
+          <p class="eyebrow !mb-2">What we believe</p>
+          <div class="prose">{paragraphs(c.beliefs).map((p) => <p class="!mb-0">{p}</p>)}</div>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* ── Ministries ── */}
+  {c.ministries.length > 0 && (
+    <section class="section-tight">
+      <div class="container container-narrow">
+        <p class="eyebrow">Ministries &amp; programs</p>
+        <div class="flex flex-wrap gap-2">
+          {c.ministries.map((m) => <span class="pill">{m}</span>)}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* ── History / fun facts ── */}
+  {(c.founded || c.funFact) && (
+    <section class="section-tight">
+      <div class="container container-narrow">
+        <p class="eyebrow">Our story</p>
+        <div class="prose">
+          {c.founded && <p><strong>Founded:</strong> {c.founded}</p>}
+          {c.funFact && <p>{c.funFact}</p>}
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* ── Livestream ── */}
+  {c.livestreamUrl && (
+    <section class="section band">
+      <div class="container container-narrow">
+        <p class="eyebrow">Watch</p>
+        <h2>Join us online</h2>
+        {livestreamEmbed ? (
+          <div class="aspect-video rounded-[var(--radius)] overflow-hidden border" style="border-color: var(--card-border);">
+            <iframe
+              src={livestreamEmbed}
+              title={`${c.name} livestream`}
+              class="w-full h-full"
+              loading="lazy"
+              allowfullscreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            ></iframe>
+          </div>
+        ) : (
+          <a class="btn btn-primary" href={c.livestreamUrl} rel="noopener" target="_blank">Watch our services</a>
+        )}
+      </div>
+    </section>
+  )}
+
+  {/* ── Church events calendar ── */}
+  {c.calendarUrl && (
+    <section class="section">
+      <div class="container">
+        <p class="eyebrow">This church's events</p>
+        <div class="rounded-[var(--radius)] overflow-hidden border" style="border-color: var(--card-border);">
+          <iframe src={c.calendarUrl} title={`${c.name} calendar`} class="w-full" style="height: 550px;" loading="lazy"></iframe>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {/* ── Give ── */}
+  {c.givingUrl && (
+    <section class="section-tight">
+      <div class="container container-narrow text-center">
+        <a class="btn btn-primary" href={c.givingUrl} rel="noopener" target="_blank">Give to {c.name}</a>
+      </div>
+    </section>
+  )}
+
+  {/* ── Map ── */}
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Where to find us</p>
+      <h2 class="!mb-6">{c.address}</h2>
+      <div class="rounded-[var(--radius)] overflow-hidden border" style="border-color: var(--card-border);">
+        <iframe
+          src={mapEmbedUrl}
+          title={`Map to ${c.name}`}
+          class="w-full"
+          style="height: 380px; border: 0;"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
+      </div>
+      <div class="mt-4">
+        <a class="btn btn-primary" href={directionsUrl} rel="noopener" target="_blank">Get directions</a>
+      </div>
+    </div>
+  </section>
+
+  {/* ── Directory navigation ── */}
+  <nav class="section-tight band" aria-label="Church directory navigation">
+    <div class="container flex flex-col sm:flex-row items-center justify-between gap-4 font-ui text-[0.95rem]">
+      <a href={`/churches/${prev.slug}/`} class="no-underline">← {prev.name}</a>
+      <a href="/find-a-church/" class="btn btn-ghost !py-2">Back to directory</a>
+      <a href={`/churches/${next.slug}/`} class="no-underline">{next.name} →</a>
+    </div>
+  </nav>
+</Base>

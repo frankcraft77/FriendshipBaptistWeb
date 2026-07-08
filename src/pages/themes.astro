@@ -1,0 +1,137 @@
+---
+/**
+ * Theme showcase — a demo "fake church" mini-site used to preview all color
+ * themes before assigning them to real churches in the spreadsheet. The
+ * dropdown is populated from the presets defined in theme.css, so newly
+ * added themes appear here automatically. Not linked in the main nav and
+ * excluded from search indexing.
+ */
+import Base from '../layouts/Base.astro';
+import { THEME_PRESETS, DEFAULT_THEME } from '../lib/themes';
+---
+
+<Base
+  title="Theme Showcase — church page template preview"
+  description="Preview of the church mini-site template in every available color theme."
+  noindex={true}
+>
+  <div id="theme-root" data-theme={DEFAULT_THEME}>
+    {/* ── Showcase controls ── */}
+    <section class="section-tight" style="background: var(--bg-inset); border-bottom: 1px solid var(--card-border);">
+      <div class="container">
+        <p class="eyebrow !mb-1">Template preview — not a real church</p>
+        <h1 class="!text-3xl !mb-2">Church page theme showcase</h1>
+        <p class="font-ui text-[0.95rem] muted !mb-5 max-w-[60ch]">
+          This sample page shows the church mini-site layout in each available
+          color theme. Pick a theme below to preview it, then assign that
+          keyword to a church in the spreadsheet's <code>theme</code> column.
+        </p>
+        <div class="flex items-center gap-3 font-ui">
+          <label for="theme-select">Theme:</label>
+          <select id="theme-select" class="!w-auto">
+            {THEME_PRESETS.map((p) => (
+              <option value={p.keyword} selected={p.keyword === DEFAULT_THEME}>
+                {p.keyword}{p.keyword === DEFAULT_THEME ? ' (default)' : ''}
+              </option>
+            ))}
+          </select>
+          <span id="theme-swatch" class="inline-block w-8 h-8 rounded-full border-2" style="background: var(--accent); border-color: var(--card-border);" aria-hidden="true"></span>
+        </div>
+      </div>
+    </section>
+
+    {/* ── Fake-church hero ── */}
+    <section class="relative">
+      <div
+        class="aspect-[16/6] min-h-[280px] flex items-end"
+        style="background: linear-gradient(160deg, color-mix(in srgb, var(--accent), transparent 70%), color-mix(in srgb, var(--accent), transparent 90%));"
+      >
+        <div class="container pb-10">
+          <p class="font-ui text-[0.78rem] font-semibold uppercase tracking-[0.14em] !mb-2" style="color: var(--accent);">A Friendship Baptist Association church</p>
+          <h2 class="!text-5xl !mb-3">Example Baptist Church</h2>
+          <p class="font-ui !mb-5 muted">123 Church Street, Oneonta, AL 35121</p>
+          <div class="flex flex-wrap gap-3">
+            <span class="btn btn-primary">Get directions</span>
+            <span class="btn btn-ghost">Watch online</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* ── Cards row ── */}
+    <section class="section-tight band">
+      <div class="container grid gap-6 md:grid-cols-2">
+        <div class="card card-accent">
+          <p class="eyebrow !mb-2">Service times</p>
+          <ul class="list-none p-0 m-0 space-y-1.5 font-ui text-[1.02rem]">
+            <li><span style="color: var(--accent);">●</span> Sunday School 9:45 AM</li>
+            <li><span style="color: var(--accent);">●</span> Sunday Worship 11:00 AM</li>
+            <li><span style="color: var(--accent);">●</span> Wednesday 6:30 PM</li>
+          </ul>
+        </div>
+        <div class="card card-accent">
+          <p class="eyebrow !mb-2">Contact</p>
+          <ul class="list-none p-0 m-0 space-y-1.5 font-ui text-[0.98rem]">
+            <li><strong>Pastor:</strong> John Example</li>
+            <li><strong>Phone:</strong> <a href="#0">(205) 555-0123</a></li>
+            <li><strong>Email:</strong> <a href="#0">hello@example.org</a></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    {/* ── Prose + pills + button samples ── */}
+    <section class="section">
+      <div class="container container-narrow">
+        <p class="eyebrow">About this church</p>
+        <h2>Who we are</h2>
+        <div class="prose">
+          <p>
+            Example Baptist Church is a placeholder congregation that exists only
+            on this page. This paragraph shows how reading text sits on the page
+            in the selected theme, with <a href="#0">links styled in the accent
+            color</a> and comfortable line spacing for older eyes.
+          </p>
+          <blockquote>“A pull quote or verse looks like this — quiet, elegant, set off by a single accent rule.”</blockquote>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-6">
+          <span class="pill">Sunday School</span>
+          <span class="pill">Youth Ministry</span>
+          <span class="pill">Missions</span>
+          <span class="pill-solid pill">2.4 mi</span>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-8">
+          <span class="btn btn-primary">Primary button</span>
+          <span class="btn btn-ghost">Secondary button</span>
+        </div>
+      </div>
+    </section>
+
+    {/* ── Accent band sample ── */}
+    <section class="band-accent section-tight">
+      <div class="container text-center">
+        <h2 class="!mb-2">A full-width mission statement band</h2>
+        <p class="font-ui !m-0 opacity-90">This is how statement strips and the site's calls-to-action recolor per theme.</p>
+      </div>
+    </section>
+
+    {/* ── Well / notice samples ── */}
+    <section class="section-tight">
+      <div class="container container-narrow space-y-4">
+        <div class="well">
+          <p class="eyebrow !mb-2">What we believe</p>
+          <p class="!m-0">An inset "well" panel for quieter supporting content.</p>
+        </div>
+        <p class="notice !m-0">A notice message looks like this — used for friendly fallbacks and hints.</p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const root = document.getElementById('theme-root')!;
+    const select = document.getElementById('theme-select') as HTMLSelectElement;
+    select.addEventListener('change', () => {
+      root.setAttribute('data-theme', select.value);
+    });
+  </script>
+</Base>

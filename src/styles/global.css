@@ -1,0 +1,24 @@
+/* Global stylesheet entry: Tailwind utilities layered over the owner's
+   token system. All color decisions live in theme.css; structure and
+   derived depth live in style.css. */
+
+@import 'tailwindcss';
+
+@import './theme.css';
+@import './style.css';
+
+/* Map the design tokens into Tailwind's theme so utilities like
+   text-accent / bg-card can be used alongside var(--…) references. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--bg-card);
+  --color-inset: var(--bg-inset);
+  --color-line: var(--card-border);
+  --color-ink: var(--text);
+  --color-ink-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-ui: var(--font-ui);
+}
