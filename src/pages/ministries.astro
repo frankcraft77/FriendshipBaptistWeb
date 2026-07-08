@@ -10,13 +10,15 @@ import { MINISTRIES } from '../content/site-data';
 >
   <section class="section-tight band">
     <div class="container">
+      <div class="contents" data-edit-section="Top of page — headline and intro">
       <p class="eyebrow">Ministries</p>
-      <h1 data-editable="true" data-editable-label="Ministries page headline">What we do</h1>
-      <p class="lede" data-editable="true" data-editable-label="Ministries page intro">
+      <h1>What we do</h1>
+      <p class="lede">
         The association exists to serve its churches. Here's what that looks
         like in practice.
         {SAMPLE_CONTENT && <span class="tag-sample ml-2">sample descriptions</span>}
       </p>
+      </div>
     </div>
   </section>
 
@@ -24,7 +26,7 @@ import { MINISTRIES } from '../content/site-data';
     <div class="container">
       <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {MINISTRIES.map((m) => (
-          <div class="card card-hover">
+          <div class="card card-hover" data-edit-section={`Ministry card: ${m.title}`}>
             <h3 class="!text-[1.3rem] !mb-2">{m.title}</h3>
             <p class="font-ui text-[0.93rem] muted !m-0">{m.text}</p>
           </div>
@@ -42,11 +44,13 @@ import { MINISTRIES } from '../content/site-data';
 
   <section class="band-accent section-tight">
     <div class="container text-center">
+      <div class="contents" data-edit-section="Bottom banner">
       <h2 class="!mb-3">Need help from the association?</h2>
       <p class="font-ui opacity-90 !mb-6 max-w-[50ch] mx-auto">
         If your church could use support with any of these ministries, the
         office would love to hear from you.
       </p>
+      </div>
       <a class="btn btn-on-accent" href="/contact/">Contact us</a>
     </div>
   </section>

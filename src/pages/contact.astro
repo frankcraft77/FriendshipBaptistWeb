@@ -12,12 +12,14 @@ const hasFormHandler = !!ENV.contactFormEndpoint;
 >
   <section class="section-tight band">
     <div class="container">
+      <div class="contents" data-edit-section="Top of page — headline and intro">
       <p class="eyebrow">Contact</p>
-      <h1 data-editable="true" data-editable-label="Contact page headline">We'd love to hear from you</h1>
-      <p class="lede" data-editable="true" data-editable-label="Contact page intro">
+      <h1>We'd love to hear from you</h1>
+      <p class="lede">
         Questions about a church, an event, or how to get involved — the
         office is here to help.
       </p>
+      </div>
     </div>
   </section>
 
@@ -25,7 +27,7 @@ const hasFormHandler = !!ENV.contactFormEndpoint;
     <div class="container grid gap-10 lg:grid-cols-2">
       <div>
         <h2 class="!text-[1.7rem]">The association office</h2>
-        <ul class="list-none p-0 m-0 mt-5 space-y-3 font-ui">
+        <ul class="list-none p-0 m-0 mt-5 space-y-3 font-ui" data-edit-section="Office contact details">
           <li>
             <strong>Address:</strong> {ASSOCIATION.officeAddress}
           </li>

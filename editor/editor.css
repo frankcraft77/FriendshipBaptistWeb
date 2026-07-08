@@ -94,7 +94,63 @@ input:focus, textarea:focus {
   border-color: #2f5d8f;
 }
 
-.field { margin-bottom: 1.15rem; }
+.field { margin-bottom: 1.6rem; }
+
+/* Rich text boxes */
+.rte {
+  background: #fdf9f1;
+  border: 1.5px solid #c9b68d;
+  border-radius: 0 0 10px 10px;
+  padding: 0.8rem 1rem;
+  min-height: 3.2rem;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+.rte:focus {
+  outline: 3px solid rgba(47, 93, 143, 0.4);
+  border-color: #2f5d8f;
+}
+.rte p { margin: 0 0 0.7em; }
+.rte p:last-child { margin-bottom: 0; }
+.rte h1, .rte h2, .rte h3, .rte h4 {
+  font-family: Georgia, serif;
+  line-height: 1.25;
+  margin: 0 0 0.4em;
+}
+.rte h1 { font-size: 1.5rem; }
+.rte h2 { font-size: 1.3rem; }
+.rte h3 { font-size: 1.15rem; }
+.rte ul, .rte ol { margin: 0 0 0.7em; padding-left: 1.5rem; }
+.rte a { color: #2f5d8f; }
+/* Keep the site's helper text visible but clearly secondary in the editor */
+.rte .eyebrow { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: #2f5d8f; font-weight: 700; }
+.rte .tag-sample { font-size: 0.7rem; color: #8a2f16; border: 1px dashed #dfa08d; border-radius: 999px; padding: 0.05rem 0.5rem; }
+
+.rte-toolbar {
+  display: flex;
+  gap: 0.25rem;
+  background: #efe4d0;
+  border: 1.5px solid #c9b68d;
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  padding: 0.35rem;
+}
+.rte-toolbar button {
+  font: inherit;
+  font-size: 0.9rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.35rem 0.7rem;
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  cursor: pointer;
+  color: #2c3542;
+}
+.rte-toolbar button:hover {
+  background: #fdf9f1;
+  border-color: #c9b68d;
+}
 
 /* Buttons — big and obvious */
 .btn {

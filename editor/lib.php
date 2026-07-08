@@ -1,11 +1,23 @@
 <?php
 /**
  * Website editor — core helpers.
- * Plain PHP, no dependencies. Everything here is deliberately conservative:
- * the editor may only touch .html files inside EDITOR_SITE_DIR, it only ever
- * changes the *text* inside existing elements (never tags/attributes), it
- * backs up before every write, and it writes via temp-file + rename so a
- * failed save can never destroy a page.
+ *
+ * Editing model (v2 — section-based):
+ *   • Templates mark whole text sections with data-edit-section="Label".
+ *     Each marked section becomes ONE rich-text field in the editor.
+ *   • Content repeated on every page (footer blocks) is marked
+ *     data-edit-shared="key" + data-edit-label="Label". Those never appear
+ *     on page screens; they are edited once, on the "Header & footer"
+ *     screen, and the save is applied to every page file.
+ *   • Anything unmarked (navigation, buttons, maps, church-data) is not
+ *     editable at all — the editor cannot break layout or scripts.
+ *
+ * Safety model (unchanged from v1):
+ *   • Only .html files inside EDITOR_SITE_DIR can be read or written.
+ *   • Submitted HTML passes a strict whitelist sanitizer (text tags only,
+ *     safe link addresses, no scripts/styles/embeds/event handlers).
+ *   • Every write: timestamped backup first (last 10 kept), then temp file
+ *     + atomic rename — a failed save can never corrupt a page.
  */
 
 declare(strict_types=1);
@@ -24,7 +36,6 @@ function editor_data_dir(): string
     $dir = __DIR__ . '/._data';
     if (!is_dir($dir)) {
         @mkdir($dir, 0755, true);
-        // Extra layer: refuse to serve anything from this folder.
         @file_put_contents($dir . '/.htaccess', "Require all denied\n");
     }
     return $dir;
@@ -41,7 +52,7 @@ function editor_backup_dir(): string
     return $dir;
 }
 
-/** HTML-escape helper used for ALL output of untrusted values. */
+/** HTML-escape helper used for ALL output of untrusted plain values. */
 function e(?string $s): string
 {
     return htmlspecialchars($s ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -60,7 +71,6 @@ function editor_session_start(): void
         'path' => '/',
         'httponly' => true,
         'samesite' => 'Lax',
-        // 'secure' is left to the server; Hostinger serves HTTPS by default.
         'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
     ]);
     session_start();
@@ -155,7 +165,6 @@ function csrf_valid(): bool
 }
 
 /* ── Path safety ────────────────────────────────────────────────────────── */
-/* The editor may only ever read/write .html files inside EDITOR_SITE_DIR.  */
 
 function site_dir(): string
 {
@@ -183,7 +192,6 @@ function safe_page_path(string $rel): ?string
     if ($abs === false || !is_file($abs)) {
         return null;
     }
-    // realpath() resolved symlinks/dots — confirm it is still inside the site.
     if (!str_starts_with($abs, site_dir() . DIRECTORY_SEPARATOR)) {
         return null;
     }
@@ -196,9 +204,8 @@ function safe_page_path(string $rel): ?string
 /* ── Page discovery ─────────────────────────────────────────────────────── */
 
 /**
- * Find all editable pages: every .html file in the site folder, skipping the
- * editor itself, backups, and hidden folders. Returns a list of
- * ['rel' => ..., 'name' => ..., 'where' => ...] sorted with Home first.
+ * Find all site pages: every .html file in the site folder, skipping the
+ * editor itself, backups, and hidden folders. Sorted with Home first.
  */
 function list_pages(): array
 {
@@ -210,7 +217,7 @@ function list_pages(): array
             function (SplFileInfo $file): bool {
                 $name = $file->getFilename();
                 if ($name[0] === '.' || $name[0] === '_') {
-                    return false; // hidden / private folders (._backups, ._data, _astro…)
+                    return false; // hidden / private folders (._backups, _astro…)
                 }
                 if ($file->isDir() && strtolower($name) === 'editor') {
                     return false; // never edit the editor itself
@@ -225,7 +232,7 @@ function list_pages(): array
             continue;
         }
         if ($file->getSize() > 3 * 1024 * 1024) {
-            continue; // unusually huge file — leave it alone
+            continue;
         }
         $rel = str_replace('\\', '/', substr($file->getPathname(), strlen($base) + 1));
         $pages[] = [
@@ -248,7 +255,6 @@ function page_friendly_name(string $abs, string $rel): string
     $head = (string) file_get_contents($abs, false, null, 0, 4096);
     if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $head, $m)) {
         $title = trim(html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        // "About — Friendship Baptist Association" → "About"
         $title = preg_replace('/\s+[—|–-]\s+[^—|–-]*$/u', '', $title) ?: $title;
         if ($title !== '') {
             return $rel === 'index.html' ? 'Home page' : $title;
@@ -279,7 +285,7 @@ function page_friendly_where(string $rel): string
 /**
  * Load a page into a DOMDocument without mangling UTF-8 text.
  * Returns [DOMDocument, md5-of-file]. The md5 is embedded in the edit form
- * and re-checked on save so we never apply edits to a file that changed
+ * and re-checked on save so edits are never applied to a file that changed
  * after the form was opened.
  */
 function load_page_dom(string $abs): array
@@ -291,8 +297,6 @@ function load_page_dom(string $abs): array
     $dom = new DOMDocument();
     $dom->preserveWhiteSpace = true;
     libxml_use_internal_errors(true); // modern HTML5 tags trigger harmless warnings
-    // The XML prolog trick tells libxml the bytes are UTF-8; we remove the
-    // prolog node right after parsing so it never appears in the saved file.
     $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html);
     libxml_clear_errors();
     foreach ($dom->childNodes as $node) {
@@ -305,202 +309,275 @@ function load_page_dom(string $abs): array
     return [$dom, md5($html)];
 }
 
-/** Serialize the DOM back to an HTML string (UTF-8, prolog stripped). */
+/**
+ * libxml writes non-ASCII characters as HTML entities (— becomes &mdash; and
+ * so on). Decode them back to raw UTF-8, keeping the structural escapes
+ * (&amp; &lt; &gt; &quot; &#39;) and skipping <script>/<style> contents.
+ */
+function decode_text_entities(string $html): string
+{
+    return preg_replace_callback(
+        '/(<(script|style)\b[^>]*>.*?<\/\2\s*>)|(&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]{1,31});)/s',
+        function (array $m): string {
+            if ($m[1] !== '') {
+                return $m[1];
+            }
+            $entity = $m[3];
+            $decoded = html_entity_decode($entity, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if ($decoded === $entity || strpbrk($decoded, "<>&\"'") !== false) {
+                return $entity;
+            }
+            return $decoded;
+        },
+        $html
+    );
+}
+
+/** Serialize a whole document back to an HTML string (UTF-8, prolog stripped). */
 function dom_to_html(DOMDocument $dom): string
 {
     $out = $dom->saveHTML();
     if ($out === false) {
         throw new RuntimeException('Could not rebuild the page.');
     }
-    // Belt & braces: drop the encoding prolog if libxml re-added it.
     $out = preg_replace('/^<\?xml[^>]*\?>\s*/', '', $out);
-
-    // libxml writes non-ASCII characters as HTML entities (— becomes &mdash;
-    // and so on), which would silently reformat the whole document. Decode
-    // them back to the raw UTF-8 the build produced. The five structural
-    // escapes (&amp; &lt; &gt; &quot; &#39;) are kept as-is so nothing a user
-    // typed can ever turn back into markup, and <script>/<style> contents are
-    // skipped entirely (the serializer leaves them raw already).
-    return preg_replace_callback(
-        '/(<(script|style)\b[^>]*>.*?<\/\2\s*>)|(&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]{1,31});)/s',
-        function (array $m): string {
-            if ($m[1] !== '') {
-                return $m[1]; // script/style block — untouched
-            }
-            $entity = $m[3];
-            $decoded = html_entity_decode($entity, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            if ($decoded === $entity || strpbrk($decoded, "<>&\"'") !== false) {
-                return $entity; // unknown entity or structural escape — keep
-            }
-            return $decoded;
-        },
-        $out
-    );
+    return decode_text_entities($out);
 }
 
-/* ── Finding editable text ──────────────────────────────────────────────── */
-
-/**
- * Elements whose text is offered for editing in fallback mode (pages without
- * data-editable markers, or "show everything" mode).
- */
-const FALLBACK_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li', 'a', 'span', 'blockquote', 'figcaption'];
-
-/** Tags whose contents must never be offered as editable text. */
-const NEVER_EDIT_INSIDE = ['script', 'style', 'title', 'noscript', 'template', 'head'];
-
-/**
- * Walk the whole document once, in document order, numbering every
- * non-whitespace text node. The numbering is deterministic, so the same walk
- * on an unchanged file (guarded by the md5 check) yields the same numbers —
- * that is how form fields find their way back to the exact text node.
- *
- * Returns: list of ['index' => int, 'node' => DOMText, 'parent' => DOMElement]
- */
-function walk_text_nodes(DOMDocument $dom): array
+/** The inner HTML of an element (its contents, not the element itself). */
+function inner_html(DOMElement $el): string
 {
-    $found = [];
-    $index = 0;
-    $body = $dom->getElementsByTagName('body')->item(0) ?? $dom->documentElement;
-    if ($body === null) {
-        return $found;
+    $out = '';
+    foreach ($el->childNodes as $child) {
+        $out .= $el->ownerDocument->saveHTML($child);
     }
-    $walk = function (DOMNode $node) use (&$walk, &$found, &$index): void {
-        if ($node->nodeType === XML_ELEMENT_NODE
-            && in_array(strtolower($node->nodeName), NEVER_EDIT_INSIDE, true)) {
-            return;
-        }
-        foreach ($node->childNodes as $child) {
-            if ($child->nodeType === XML_TEXT_NODE) {
-                if (trim($child->nodeValue ?? '') !== '') {
-                    $found[] = [
-                        'index' => $index,
-                        'node' => $child,
-                        'parent' => $node,
-                    ];
-                }
-                $index++; // count every text node, even whitespace, for stability
-            } elseif ($child->nodeType === XML_ELEMENT_NODE) {
-                $walk($child);
-            }
-        }
-    };
-    $walk($body);
-    return $found;
+    return decode_text_entities($out);
 }
 
-/** True if $el or any ancestor carries data-editable. */
-function inside_editable(DOMNode $el): ?DOMElement
-{
-    for ($n = $el; $n instanceof DOMElement; $n = $n->parentNode) {
-        if ($n->hasAttribute('data-editable')) {
-            return $n;
-        }
-        if (!($n->parentNode instanceof DOMElement)) {
-            break;
-        }
-    }
-    return null;
-}
-
-/** Human word for a tag, used to label fallback fields. */
-function tag_word(string $tag): string
-{
-    return match (strtolower($tag)) {
-        'h1', 'h2', 'h3', 'h4', 'h5', 'h6' => 'Heading',
-        'p' => 'Paragraph',
-        'li' => 'List item',
-        'a' => 'Link',
-        'blockquote' => 'Quote',
-        'figcaption' => 'Caption',
-        default => 'Text',
-    };
-}
+/* ── Editable sections ──────────────────────────────────────────────────── */
 
 /**
- * Build the list of editable form fields for a page.
+ * The page's own editable sections, in document order:
+ * elements marked data-edit-section, excluding anything inside a shared
+ * (header/footer) region. Each becomes one rich-text field.
  *
- * $mode 'marked' → only text inside data-editable elements (preferred; used
- *                  automatically when the page has any markers).
- * $mode 'all'    → text of common text elements (h1–h6, p, li, a, span, …).
- *
- * Each field: ['id' => 't12', 'label' => ..., 'value' => trimmed text,
- *              'long' => bool]
+ * Field ids are r0, r1… by document order — deterministic on an unchanged
+ * file (guarded by the md5 check), which is how submitted fields find their
+ * way back to the right section.
  */
-function collect_fields(DOMDocument $dom, string $mode): array
+function collect_section_fields(DOMDocument $dom): array
 {
+    $xpath = new DOMXPath($dom);
     $fields = [];
     $labelCounts = [];
-    foreach (walk_text_nodes($dom) as $item) {
-        /** @var DOMElement $parent */
-        $parent = $item['parent'];
-        // Whitespace runs collapse when a browser renders HTML, so collapsing
-        // them in the form too is faithful — and far easier to read/edit.
-        $text = normalize_ws($item['node']->nodeValue ?? '');
-
-        $marked = inside_editable($parent);
-        if ($mode === 'marked') {
-            if ($marked === null) {
-                continue;
-            }
-            $label = $marked->getAttribute('data-editable-label');
-            if ($label === '') {
-                $label = tag_word($marked->nodeName) . ' — “' . snippet($text) . '”';
-            }
-        } else {
-            if (!in_array(strtolower($parent->nodeName), FALLBACK_TAGS, true)) {
-                continue;
-            }
-            $label = tag_word($parent->nodeName) . ' — “' . snippet($text) . '”';
+    $i = 0;
+    foreach ($xpath->query('//*[@data-edit-section]') as $el) {
+        /** @var DOMElement $el */
+        $index = $i++;
+        if (has_ancestor_with_attr($el, 'data-edit-shared') || has_ancestor_with_attr($el->parentNode, 'data-edit-section')) {
+            continue; // inside shared content or a nested section — skip
         }
-
-        // A marked element with several text parts gets "(part 2)", "(part 3)"…
+        $label = trim($el->getAttribute('data-edit-section')) ?: 'Text section';
         $labelCounts[$label] = ($labelCounts[$label] ?? 0) + 1;
         if ($labelCounts[$label] > 1) {
-            $label .= ' (part ' . $labelCounts[$label] . ')';
+            $label .= ' (' . $labelCounts[$label] . ')';
         }
-
         $fields[] = [
-            'id' => 't' . $item['index'],
+            'id' => 'r' . $index,
             'label' => $label,
-            'value' => $text,
-            'long' => mb_strlen($text) > 90,
+            'html' => sanitize_fragment_html(inner_html($el)),
         ];
     }
     return $fields;
 }
 
-/** Collapse whitespace runs to single spaces and trim (HTML-rendering-faithful). */
-function normalize_ws(string $text): string
+/** True if the node or any ancestor element carries the given attribute. */
+function has_ancestor_with_attr(?DOMNode $node, string $attr): bool
 {
-    return trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+    for ($n = $node; $n instanceof DOMElement; $n = $n->parentNode) {
+        if ($n->hasAttribute($attr)) {
+            return true;
+        }
+    }
+    return false;
 }
 
-/** Short preview used inside auto-generated field labels. */
-function snippet(string $text): string
+/**
+ * Shared (header/footer) sections gathered across the whole site, keyed by
+ * their data-edit-shared value. The first page that contains a key provides
+ * its label and current content (pages are scanned Home-first, and the
+ * footer is identical everywhere anyway).
+ */
+function collect_shared_fields(): array
 {
-    $text = preg_replace('/\s+/u', ' ', $text);
-    return mb_strlen($text) > 40 ? mb_substr($text, 0, 40) . '…' : $text;
+    $fields = [];
+    foreach (list_pages() as $page) {
+        $abs = safe_page_path($page['rel']);
+        if ($abs === null) {
+            continue;
+        }
+        [$dom] = load_page_dom($abs);
+        $xpath = new DOMXPath($dom);
+        foreach ($xpath->query('//*[@data-edit-shared]') as $el) {
+            /** @var DOMElement $el */
+            $key = trim($el->getAttribute('data-edit-shared'));
+            if ($key === '' || preg_match('/^[\w-]+$/', $key) !== 1 || isset($fields[$key])) {
+                continue;
+            }
+            $fields[$key] = [
+                'id' => $key,
+                'label' => trim($el->getAttribute('data-edit-label')) ?: $key,
+                'html' => sanitize_fragment_html(inner_html($el)),
+            ];
+        }
+    }
+    return array_values($fields);
 }
 
-/** Does this page have any data-editable markers? */
-function page_has_markers(DOMDocument $dom): bool
+/* ── Sanitizer ──────────────────────────────────────────────────────────── */
+/* Submitted rich text passes through this whitelist. Anything not listed
+   is either unwrapped (harmless wrappers keep their text) or dropped
+   entirely (scripts, styles, embeds…). Event handlers never survive
+   because only the attributes below are copied.                          */
+
+const ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'b', 'i', 'u', 's', 'a',
+    'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'blockquote', 'span'];
+const DROPPED_TAGS = ['script', 'style', 'svg', 'iframe', 'object', 'embed',
+    'form', 'input', 'button', 'textarea', 'select', 'link', 'meta', 'img',
+    'video', 'audio', 'canvas', 'noscript', 'template', 'base'];
+
+/** Is this style attribute value harmless? (colors/fonts yes; url()/expression() no) */
+function style_value_safe(string $value): bool
 {
-    $xpath = new DOMXPath($dom);
-    return $xpath->query('//*[@data-editable]')->length > 0;
+    return stripos($value, 'url(') === false
+        && stripos($value, 'expression(') === false
+        && stripos($value, 'javascript') === false
+        && strlen($value) <= 500;
+}
+
+/** Is this link target safe? http(s), mailto, tel, and site-relative only. */
+function href_value_safe(string $value): bool
+{
+    $v = trim($value);
+    if ($v === '' || strlen($v) > 2000) {
+        return false;
+    }
+    if (preg_match('#^(https?:)?//#i', $v) || preg_match('#^(mailto|tel):#i', $v)) {
+        return true;
+    }
+    // Relative link (starts with /, ./, #, ?, or a plain path) with no scheme.
+    return !preg_match('#^[a-z][a-z0-9+.-]*:#i', $v);
+}
+
+/**
+ * Sanitize an untrusted HTML fragment against the whitelist.
+ * Returns clean fragment HTML (UTF-8), safe to place into a page.
+ */
+function sanitize_fragment_html(string $html): string
+{
+    if (trim($html) === '') {
+        return '';
+    }
+    $doc = new DOMDocument();
+    libxml_use_internal_errors(true);
+    $doc->loadHTML('<?xml encoding="utf-8" ?><div id="__sanitize_root__">' . $html . '</div>');
+    libxml_clear_errors();
+    $root = (new DOMXPath($doc))->query('//div[@id="__sanitize_root__"]')->item(0);
+    if (!($root instanceof DOMElement)) {
+        return '';
+    }
+
+    $out = new DOMDocument();
+    $holder = $out->createElement('div');
+    $out->appendChild($holder);
+    sanitize_children($root, $holder, $out);
+
+    $clean = '';
+    foreach ($holder->childNodes as $child) {
+        $clean .= $out->saveHTML($child);
+    }
+    return trim(decode_text_entities($clean));
+}
+
+/** Walk source children, copying only whitelisted structure into $target. */
+function sanitize_children(DOMNode $src, DOMNode $target, DOMDocument $out): void
+{
+    foreach ($src->childNodes as $child) {
+        if ($child->nodeType === XML_TEXT_NODE) {
+            $target->appendChild($out->createTextNode($child->nodeValue ?? ''));
+            continue;
+        }
+        if ($child->nodeType !== XML_ELEMENT_NODE) {
+            continue; // comments, PIs etc. are dropped
+        }
+        /** @var DOMElement $child */
+        $tag = strtolower($child->nodeName);
+        if (in_array($tag, DROPPED_TAGS, true)) {
+            continue; // dangerous element — dropped with its contents
+        }
+        if (!in_array($tag, ALLOWED_TAGS, true)) {
+            // Unknown wrapper (div, figure…): keep its contents, lose the tag.
+            sanitize_children($child, $target, $out);
+            continue;
+        }
+        $el = $out->createElement($tag);
+        // Copy only known-harmless attributes.
+        if ($child->hasAttribute('class')) {
+            $class = $child->getAttribute('class');
+            if (strlen($class) <= 300 && preg_match('/^[\w\s\/\[\]().:%#!-]*$/u', $class)) {
+                $el->setAttribute('class', $class);
+            }
+        }
+        if ($child->hasAttribute('style') && style_value_safe($child->getAttribute('style'))) {
+            $el->setAttribute('style', $child->getAttribute('style'));
+        }
+        if ($tag === 'a' && $child->hasAttribute('href') && href_value_safe($child->getAttribute('href'))) {
+            $el->setAttribute('href', $child->getAttribute('href'));
+            if ($child->getAttribute('target') === '_blank') {
+                $el->setAttribute('target', '_blank');
+                $el->setAttribute('rel', 'noopener');
+            }
+        }
+        $target->appendChild($el);
+        sanitize_children($child, $el, $out);
+    }
+}
+
+/** Replace an element's children with a sanitized HTML fragment. */
+function set_inner_html(DOMElement $el, string $cleanFragment): void
+{
+    while ($el->firstChild) {
+        $el->removeChild($el->firstChild);
+    }
+    if (trim($cleanFragment) === '') {
+        return;
+    }
+    $tmp = new DOMDocument();
+    libxml_use_internal_errors(true);
+    $tmp->loadHTML('<?xml encoding="utf-8" ?><div id="__frag__">' . $cleanFragment . '</div>');
+    libxml_clear_errors();
+    $frag = (new DOMXPath($tmp))->query('//div[@id="__frag__"]')->item(0);
+    if (!($frag instanceof DOMElement)) {
+        return;
+    }
+    foreach (iterator_to_array($frag->childNodes) as $child) {
+        $el->appendChild($el->ownerDocument->importNode($child, true));
+    }
+}
+
+/** Whitespace-insensitive comparison key for "did this section change?". */
+function fragment_signature(string $html): string
+{
+    return preg_replace('/\s+/u', ' ', trim($html)) ?? $html;
 }
 
 /* ── Saving ─────────────────────────────────────────────────────────────── */
 
 /**
- * Apply submitted field values to the page and save it.
- * - Only text nodes change; tags and attributes are never touched.
- * - The current file is backed up first.
- * - Writing is temp-file + atomic rename, so a failure cannot corrupt the page.
- *
- * Returns the number of fields that actually changed.
+ * Apply submitted section values to one page and save it.
+ * Returns the number of sections that actually changed.
  */
-function save_page(string $abs, string $expectedHash, string $mode, array $posted): int
+function save_page(string $abs, string $expectedHash, array $posted): int
 {
     [$dom, $hash] = load_page_dom($abs);
     if (!hash_equals($expectedHash, $hash)) {
@@ -510,50 +587,90 @@ function save_page(string $abs, string $expectedHash, string $mode, array $poste
         );
     }
 
+    $xpath = new DOMXPath($dom);
     $changed = 0;
-    foreach (walk_text_nodes($dom) as $item) {
-        $id = 't' . $item['index'];
+    $i = 0;
+    foreach ($xpath->query('//*[@data-edit-section]') as $el) {
+        /** @var DOMElement $el */
+        $id = 'r' . $i++;
         if (!array_key_exists($id, $posted)) {
             continue;
         }
-        // Re-apply the same eligibility rules as when the form was built, so a
-        // hand-crafted POST cannot address text the form never offered.
-        $parent = $item['parent'];
-        if ($mode === 'marked') {
-            if (inside_editable($parent) === null) {
-                continue;
-            }
-        } elseif (!in_array(strtolower($parent->nodeName), FALLBACK_TAGS, true)) {
+        if (has_ancestor_with_attr($el, 'data-edit-shared') || has_ancestor_with_attr($el->parentNode, 'data-edit-section')) {
             continue;
         }
-
-        $new = (string) $posted[$id];
-        if (mb_strlen($new) > 8000) {
-            throw new RuntimeException('One of the text fields is too long to save.');
+        $raw = (string) $posted[$id];
+        if (strlen($raw) > 200000) {
+            throw new RuntimeException('One of the sections is too large to save.');
         }
-        // These fields are plain text within one element — line breaks typed
-        // in the box become spaces, matching how the page would render them.
-        $new = normalize_ws($new);
-
-        $old = $item['node']->nodeValue ?? '';
-        if (normalize_ws($old) === $new) {
-            continue; // unchanged (ignoring whitespace runs, as a browser would)
+        $clean = sanitize_fragment_html($raw);
+        if (fragment_signature($clean) === fragment_signature(sanitize_fragment_html(inner_html($el)))) {
+            continue; // unchanged
         }
-        // Preserve the original surrounding whitespace so the file's
-        // indentation/formatting stays exactly as the build produced it.
-        preg_match('/^\s*/', $old, $pre);
-        preg_match('/\s*$/', $old, $post);
-        $item['node']->nodeValue = ($pre[0] ?? '') . $new . ($post[0] ?? '');
+        set_inner_html($el, $clean);
         $changed++;
     }
 
     if ($changed === 0) {
         return 0;
     }
-
     backup_page($abs);
     atomic_write($abs, dom_to_html($dom));
     return $changed;
+}
+
+/**
+ * Apply shared (header/footer) section values to EVERY page that contains
+ * them. Each modified file is backed up first. Returns [sections, files].
+ */
+function save_shared(array $posted): array
+{
+    // Sanitize each submitted shared value once, keyed by its marker.
+    $updates = [];
+    foreach ($posted as $key => $raw) {
+        $key = (string) $key;
+        if (preg_match('/^[\w-]+$/', $key) !== 1) {
+            continue;
+        }
+        if (strlen((string) $raw) > 200000) {
+            throw new RuntimeException('One of the sections is too large to save.');
+        }
+        $updates[$key] = sanitize_fragment_html((string) $raw);
+    }
+    if (!$updates) {
+        return [0, 0];
+    }
+
+    $filesChanged = 0;
+    $sectionsChanged = [];
+    foreach (list_pages() as $page) {
+        $abs = safe_page_path($page['rel']);
+        if ($abs === null) {
+            continue;
+        }
+        [$dom] = load_page_dom($abs);
+        $xpath = new DOMXPath($dom);
+        $dirty = false;
+        foreach ($xpath->query('//*[@data-edit-shared]') as $el) {
+            /** @var DOMElement $el */
+            $key = trim($el->getAttribute('data-edit-shared'));
+            if (!isset($updates[$key])) {
+                continue;
+            }
+            if (fragment_signature($updates[$key]) === fragment_signature(sanitize_fragment_html(inner_html($el)))) {
+                continue;
+            }
+            set_inner_html($el, $updates[$key]);
+            $dirty = true;
+            $sectionsChanged[$key] = true;
+        }
+        if ($dirty) {
+            backup_page($abs);
+            atomic_write($abs, dom_to_html($dom));
+            $filesChanged++;
+        }
+    }
+    return [count($sectionsChanged), $filesChanged];
 }
 
 /** Write content to a temp file in the same folder, then rename into place. */
@@ -605,7 +722,7 @@ function backups_for(string $rel): array
 {
     $pattern = editor_backup_dir() . '/' . backup_prefix($rel) . '.*.bak';
     $files = glob($pattern) ?: [];
-    rsort($files); // timestamped names sort chronologically
+    rsort($files);
     return $files;
 }
 
@@ -624,7 +741,7 @@ function restore_latest_backup(string $abs, string $rel): void
     if ($content === false) {
         throw new RuntimeException('The earlier version could not be read.');
     }
-    backup_page($abs);           // current state becomes the newest backup
-    atomic_write($abs, $content); // then the old version takes its place
-    @unlink($latest);             // consumed — prevents undo ping-ponging on itself
+    backup_page($abs);
+    atomic_write($abs, $content);
+    @unlink($latest);
 }

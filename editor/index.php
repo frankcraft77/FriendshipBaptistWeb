@@ -1,8 +1,9 @@
 <?php
 /**
  * Website editor — the whole app.
- * Screens: login → page list → edit form → save / undo.
- * All heavy lifting lives in lib.php; this file is routing + HTML.
+ * Screens: login → page list → edit a page (one rich-text field per marked
+ * section) → save / undo. A special "Header & footer" screen edits the
+ * content that repeats on every page and applies the change site-wide.
  */
 
 declare(strict_types=1);
@@ -12,8 +13,8 @@ require __DIR__ . '/lib.php';
 editor_session_start();
 
 $action = (string) ($_REQUEST['action'] ?? '');
-$notice = '';       // green "it worked" message
-$error = '';        // red "something went wrong" message
+$notice = '';
+$error = '';
 
 if (!empty($_SESSION['flash_error'])) {
     $error = (string) $_SESSION['flash_error'];
@@ -24,10 +25,9 @@ if (!empty($_SESSION['flash_notice'])) {
     unset($_SESSION['flash_notice']);
 }
 
-/* ── Actions (POST first, then which screen to show) ────────────────────── */
+/* ── Actions ────────────────────────────────────────────────────────────── */
 
 try {
-    // Log out
     if ($action === 'logout') {
         session_unset();
         session_destroy();
@@ -35,7 +35,6 @@ try {
         exit;
     }
 
-    // Log in
     if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $wait = lockout_active();
         if ($wait > 0) {
@@ -48,28 +47,41 @@ try {
         }
     }
 
-    // Save changes
+    // Save one page's sections
     if ($action === 'save' && $_SERVER['REQUEST_METHOD'] === 'POST' && is_logged_in()) {
         if (!csrf_valid()) {
             $error = 'That form had expired. Your changes were not saved — please try again.';
         } else {
             $rel = (string) ($_POST['page'] ?? '');
             $abs = safe_page_path($rel);
-            $mode = ($_POST['mode'] ?? '') === 'all' ? 'all' : 'marked';
             if ($abs === null) {
                 $error = 'That page could not be found.';
             } else {
-                $changed = save_page($abs, (string) ($_POST['filehash'] ?? ''), $mode, $_POST['field'] ?? []);
+                $changed = save_page($abs, (string) ($_POST['filehash'] ?? ''), $_POST['field'] ?? []);
                 $_SESSION['flash_notice'] = $changed > 0
                     ? 'Saved. Your changes are live on the website. (A backup of the previous version was kept.)'
                     : 'Nothing had changed, so nothing was saved.';
-                header('Location: index.php?action=edit&page=' . rawurlencode($rel) . ($mode === 'all' ? '&mode=all' : ''));
+                header('Location: index.php?action=edit&page=' . rawurlencode($rel));
                 exit;
             }
         }
     }
 
-    // Undo last change
+    // Save shared header/footer sections → applied to every page
+    if ($action === 'save-shared' && $_SERVER['REQUEST_METHOD'] === 'POST' && is_logged_in()) {
+        if (!csrf_valid()) {
+            $error = 'That form had expired. Your changes were not saved — please try again.';
+        } else {
+            [$sections, $files] = save_shared($_POST['field'] ?? []);
+            $_SESSION['flash_notice'] = $sections > 0
+                ? "Saved. The change is live on all $files pages of the website. (Backups were kept.)"
+                : 'Nothing had changed, so nothing was saved.';
+            header('Location: index.php?action=edit-shared');
+            exit;
+        }
+    }
+
+    // Undo last change to one page
     if ($action === 'restore' && $_SERVER['REQUEST_METHOD'] === 'POST' && is_logged_in()) {
         if (!csrf_valid()) {
             $error = 'That form had expired — please try again.';
@@ -93,7 +105,7 @@ try {
         : 'Sorry — something went wrong on the server. Nothing was changed.';
 }
 
-/* ── Screen rendering ───────────────────────────────────────────────────── */
+/* ── Shared page chrome ─────────────────────────────────────────────────── */
 
 function page_head(string $title): void
 {
@@ -120,6 +132,30 @@ function show_messages(string $notice, string $error): void
     }
 }
 
+function show_warning(): void
+{
+    echo '<p class="warning">These edits change the live website right away. If the website is ever rebuilt and re-uploaded from the original design files, edits made here will be replaced. For permanent changes, ask your developer to update the original files too.</p>';
+}
+
+/** One rich-text field: label + toolbar + editable area (synced by editor.js). */
+function render_rich_field(string $id, string $label, string $html): void
+{
+    echo '<div class="field">';
+    echo '<label id="label-' . e($id) . '">' . e($label) . '</label>';
+    echo '<div class="rte-toolbar" data-for="' . e($id) . '">';
+    echo '<button type="button" data-cmd="bold" title="Bold"><strong>B</strong></button>';
+    echo '<button type="button" data-cmd="italic" title="Italic"><em>I</em></button>';
+    echo '<button type="button" data-cmd="insertUnorderedList" title="Bulleted list">&bull; list</button>';
+    echo '<button type="button" data-cmd="createLink" title="Add a link">link</button>';
+    echo '<button type="button" data-cmd="removeFormat" title="Remove formatting">clear</button>';
+    echo '</div>';
+    // The sanitized section HTML is intentionally rendered (not escaped):
+    // it is the page's own content, re-sanitized server-side on display.
+    echo '<div class="rte" contenteditable="true" id="' . e($id) . '" aria-labelledby="label-' . e($id) . '">' . $html . '</div>';
+    echo '<input type="hidden" name="field[' . e($id) . ']" data-rte-for="' . e($id) . '">';
+    echo '</div>';
+}
+
 /* ── Screen: login ──────────────────────────────────────────────────────── */
 
 if (!is_logged_in()) {
@@ -140,7 +176,38 @@ if (!is_logged_in()) {
     exit;
 }
 
-/* ── Screen: edit a page ────────────────────────────────────────────────── */
+/* ── Screen: edit the shared header & footer ────────────────────────────── */
+
+if ($action === 'edit-shared') {
+    $fields = collect_shared_fields();
+
+    page_head('Edit: header & footer');
+    echo '<main class="wrap">';
+    echo '<p class="topbar"><a href="index.php">&larr; Back to pages</a>';
+    echo '<a class="right" href="index.php?action=logout">Log out</a></p>';
+    echo '<h1>Header &amp; footer</h1>';
+    echo '<p class="hint">This text appears at the bottom of <strong>every</strong> page. Saving here updates the whole website at once.</p>';
+    show_warning();
+    show_messages($notice, $error);
+
+    if (!$fields) {
+        echo '<p>No shared sections were found on the site.</p>';
+    } else {
+        echo '<form method="post" action="index.php?action=save-shared" id="edit-form">';
+        echo '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">';
+        foreach ($fields as $f) {
+            render_rich_field($f['id'], $f['label'], $f['html']);
+        }
+        echo '<div class="savebar"><button type="submit" class="btn">Save changes</button>';
+        echo '<span class="savebar-note">Applies to every page. Backups are kept.</span></div>';
+        echo '</form>';
+    }
+    echo '</main>';
+    page_foot();
+    exit;
+}
+
+/* ── Screen: edit one page ──────────────────────────────────────────────── */
 
 if ($action === 'edit') {
     $rel = (string) ($_GET['page'] ?? '');
@@ -152,9 +219,7 @@ if ($action === 'edit') {
     }
 
     [$dom, $filehash] = load_page_dom($abs);
-    $hasMarkers = page_has_markers($dom);
-    $mode = (($_GET['mode'] ?? '') === 'all' || !$hasMarkers) ? 'all' : 'marked';
-    $fields = collect_fields($dom, $mode);
+    $fields = collect_section_fields($dom);
     $niceName = page_friendly_name($abs, $rel);
     $hasBackups = count(backups_for($rel)) > 0;
 
@@ -162,38 +227,26 @@ if ($action === 'edit') {
     echo '<main class="wrap">';
     echo '<p class="topbar"><a href="index.php">&larr; Back to pages</a>';
     echo '<a class="right" href="index.php?action=logout">Log out</a></p>';
-
     echo '<h1>' . e($niceName) . '</h1>';
-    echo '<p class="warning">These edits change the live website right away. If the website is ever rebuilt and re-uploaded from the original design files, edits made here will be replaced. For permanent changes, ask your developer to update the original files too.</p>';
-
+    show_warning();
     show_messages($notice, $error);
 
-    if ($hasMarkers && $mode === 'marked') {
-        echo '<p class="hint">Don&rsquo;t see the text you need? <a href="index.php?action=edit&page=' . rawurlencode($rel) . '&mode=all">Show every piece of text on this page</a>.</p>';
-    } elseif ($hasMarkers && $mode === 'all') {
-        echo '<p class="hint">Showing every piece of text. <a href="index.php?action=edit&page=' . rawurlencode($rel) . '">Show only the main fields instead</a>.</p>';
-    }
-
     if (!$fields) {
-        echo '<p>This page has no editable text.</p>';
+        if (str_starts_with($rel, 'churches/')) {
+            echo '<div class="msg msg-ok" style="background:#eef2f7;border-color:#b9c6d8;color:#2c3542;">';
+            echo 'This church page is built from the <strong>church spreadsheet</strong> — to change its text, edit that church\'s row in the Google Sheet and rebuild the site (see the main README). That way the change is permanent.';
+            echo '</div>';
+        } else {
+            echo '<p>This page has no editable text sections yet. Ask your developer to mark the sections that should be editable (see README-EDITOR.md).</p>';
+        }
     } else {
         echo '<form method="post" action="index.php?action=save" id="edit-form">';
         echo '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">';
         echo '<input type="hidden" name="page" value="' . e($rel) . '">';
-        echo '<input type="hidden" name="mode" value="' . e($mode) . '">';
         echo '<input type="hidden" name="filehash" value="' . e($filehash) . '">';
-
         foreach ($fields as $f) {
-            echo '<div class="field">';
-            echo '<label for="' . e($f['id']) . '">' . e($f['label']) . '</label>';
-            if ($f['long']) {
-                echo '<textarea id="' . e($f['id']) . '" name="field[' . e($f['id']) . ']" rows="3">' . e($f['value']) . '</textarea>';
-            } else {
-                echo '<input type="text" id="' . e($f['id']) . '" name="field[' . e($f['id']) . ']" value="' . e($f['value']) . '">';
-            }
-            echo '</div>';
+            render_rich_field($f['id'], $f['label'], $f['html']);
         }
-
         echo '<div class="savebar"><button type="submit" class="btn">Save changes</button>';
         echo '<span class="savebar-note">A backup is kept every time you save.</span></div>';
         echo '</form>';
@@ -218,21 +271,22 @@ page_head('Website editor — choose a page');
 echo '<main class="wrap">';
 echo '<p class="topbar"><span></span><a class="right" href="index.php?action=logout">Log out</a></p>';
 echo '<h1>Choose a page to edit</h1>';
-echo '<p class="warning">These edits change the live website right away. If the website is ever rebuilt and re-uploaded from the original design files, edits made here will be replaced. For permanent changes, ask your developer to update the original files too.</p>';
+show_warning();
 show_messages($notice, $error);
 
-$pages = list_pages();
-if (!$pages) {
-    echo '<p>No pages were found. Check that the editor folder sits inside the website folder (see the README).</p>';
-} else {
-    echo '<ul class="pagelist">';
-    foreach ($pages as $p) {
-        echo '<li><a href="index.php?action=edit&page=' . rawurlencode($p['rel']) . '">';
-        echo '<strong>' . e($p['name']) . '</strong>';
-        echo '<span>' . e($p['where']) . '</span>';
-        echo '</a></li>';
-    }
-    echo '</ul>';
+echo '<ul class="pagelist">';
+// The shared header/footer content, edited once for the whole site.
+echo '<li><a href="index.php?action=edit-shared">';
+echo '<strong>Header &amp; footer</strong>';
+echo '<span>Text that repeats on every page — edited here once</span>';
+echo '</a></li>';
+
+foreach (list_pages() as $p) {
+    echo '<li><a href="index.php?action=edit&page=' . rawurlencode($p['rel']) . '">';
+    echo '<strong>' . e($p['name']) . '</strong>';
+    echo '<span>' . e($p['where']) . '</span>';
+    echo '</a></li>';
 }
+echo '</ul>';
 echo '</main>';
 page_foot();

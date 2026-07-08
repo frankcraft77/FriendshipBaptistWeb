@@ -10,11 +10,13 @@ import { SAMPLE_RESOURCES } from '../content/site-data';
 >
   <section class="section-tight band">
     <div class="container">
+      <div class="contents" data-edit-section="Top of page — headline and intro">
       <p class="eyebrow">Resources</p>
-      <h1 data-editable="true" data-editable-label="Resources page headline">For pastors &amp; member churches</h1>
-      <p class="lede" data-editable="true" data-editable-label="Resources page intro">
+      <h1>For pastors &amp; member churches</h1>
+      <p class="lede">
         Documents, forms, and helpful links — all in one place.
       </p>
+      </div>
     </div>
   </section>
 
@@ -36,7 +38,7 @@ import { SAMPLE_RESOURCES } from '../content/site-data';
                   <path d="M13 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8zM13 3v5h5M9.5 13h5M9.5 16.5h5" />
                 </svg>
               </span>
-              <span>
+              <span data-edit-section={`Resource item: ${r.title}`}>
                 <span class="font-ui font-semibold block" style="color: var(--text);">
                   {r.title}
                   {SAMPLE_CONTENT && <span class="tag-sample ml-2">placeholder</span>}

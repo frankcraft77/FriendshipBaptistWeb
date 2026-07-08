@@ -14,12 +14,14 @@ import * as MissionVision from '../content/mission-vision.md';
 >
   <section class="section-tight band">
     <div class="container">
+      <div class="contents" data-edit-section="Top of page — headline and intro">
       <p class="eyebrow">About us</p>
-      <h1 data-editable="true" data-editable-label="About page headline">One family of churches, one mission</h1>
-      <p class="lede" data-editable="true" data-editable-label="About page intro">
+      <h1>One family of churches, one mission</h1>
+      <p class="lede">
         Southern Baptist churches serving Blount County, Alabama — together
         since {ASSOCIATION.organized}.
       </p>
+      </div>
     </div>
   </section>
 
@@ -36,7 +38,7 @@ import * as MissionVision from '../content/mission-vision.md';
           <p class="font-ui text-[0.9rem] muted !m-0">{ASSOCIATION.amsTitle}</p>
         </div>
       </div>
-      <div class="prose">
+      <div class="prose" data-edit-section="Welcome letter">
         <Letter.Content />
       </div>
       {SAMPLE_CONTENT && (
@@ -52,7 +54,7 @@ import * as MissionVision from '../content/mission-vision.md';
   <section class="band-accent section-tight">
     <div class="container container-narrow text-center">
       <p class="eyebrow">Mission &amp; vision {SAMPLE_CONTENT && '— draft for review'}</p>
-      <div class="prose mx-auto text-[1.15rem]">
+      <div class="prose mx-auto text-[1.15rem]" data-edit-section="Mission and vision statement">
         <MissionVision.Content />
       </div>
     </div>
@@ -63,7 +65,7 @@ import * as MissionVision from '../content/mission-vision.md';
     <div class="container container-narrow">
       <p class="eyebrow">Who we are</p>
       <h2>Our story</h2>
-      <div class="prose">
+      <div class="prose" data-edit-section="Our story">
         <WhoWeAre.Content />
       </div>
     </div>
@@ -74,7 +76,7 @@ import * as MissionVision from '../content/mission-vision.md';
     <div class="container container-narrow">
       <p class="eyebrow">Good question</p>
       <h2>What is a Baptist association?</h2>
-      <div class="prose">
+      <div class="prose" data-edit-section="What is a Baptist association?">
         <Explainer.Content />
       </div>
     </div>
