@@ -197,11 +197,13 @@ a.card:hover, .card-hover:hover {
   color: var(--accent);
 }
 
-.btn-on-accent {
+.btn-on-accent,
+.band-accent .btn-on-accent {
   background: var(--accent-contrast);
   color: var(--accent);
 }
-.btn-on-accent:hover { filter: brightness(0.97); color: var(--accent); }
+.btn-on-accent:hover,
+.band-accent .btn-on-accent:hover { filter: brightness(0.97); color: var(--accent); }
 
 .pill {
   display: inline-flex;

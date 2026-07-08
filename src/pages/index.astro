@@ -1,0 +1,125 @@
+---
+import Base from '../layouts/Base.astro';
+import ChurchCard from '../components/ChurchCard.astro';
+import Icon from '../components/Icon.astro';
+import { loadChurches } from '../lib/churches';
+import { ASSOCIATION, SAMPLE_CONTENT } from '../config';
+import { HOME_HIGHLIGHTS } from '../content/site-data';
+import * as Welcome from '../content/home-welcome.md';
+
+const { churches } = await loadChurches();
+const previewChurches = churches.slice(0, 3);
+---
+
+<Base title={`${ASSOCIATION.name} — Churches together for Blount County, Alabama`}>
+  {/* ── Typographic hero (no photo required) ── */}
+  <section
+    class="section"
+    style="background: linear-gradient(175deg, color-mix(in srgb, var(--accent), transparent 93%), var(--bg) 55%);"
+  >
+    <div class="container text-center flex flex-col items-center fade-in-up" style="padding-block: 2.5rem;">
+      <p class="eyebrow">{ASSOCIATION.churchCount} Southern Baptist churches · Blount County, Alabama · since {ASSOCIATION.organized}</p>
+      <h1 class="max-w-[17ch]">Churches together, for Blount County and the world</h1>
+      <p class="lede mt-4 mx-auto">
+        We're a family of local churches helping each other love God, love our
+        neighbors, and share the hope of Jesus — and there's a place for you.
+      </p>
+      <div class="mt-9 flex flex-wrap justify-center gap-3">
+        <a class="btn btn-primary" href="/find-a-church/">
+          <Icon name="pin" class="w-4 h-4" />
+          Find a church near you
+        </a>
+        <a class="btn btn-ghost" href="/events/">Upcoming events</a>
+        <a class="btn btn-ghost" href="/about/">About us</a>
+      </div>
+    </div>
+  </section>
+
+  {/* ── Mission band ── */}
+  <section class="band-accent section-tight">
+    <div class="container text-center">
+      <p class="font-display text-[clamp(1.5rem,3.5vw,2.2rem)] leading-snug !m-0" style="font-family: var(--font-display);">
+        Helping our churches help each other reach Blount County —<br class="hidden md:block" />
+        and the world — with the gospel.
+      </p>
+      {SAMPLE_CONTENT && <p class="font-ui text-[0.78rem] !mt-3 !mb-0 opacity-75">Draft mission statement — for review</p>}
+    </div>
+  </section>
+
+  {/* ── What we do ── */}
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">What we do</p>
+      <h2 class="max-w-[24ch]">Stronger together than any church could be alone</h2>
+      <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {HOME_HIGHLIGHTS.map((h) => (
+          <a class="card card-hover no-underline" href={h.href}>
+            <span class="inline-flex items-center justify-center w-11 h-11 rounded-xl mb-4" style="background: color-mix(in srgb, var(--accent), transparent 88%); color: var(--accent);">
+              <Icon name={h.icon} />
+            </span>
+            <h3 class="!text-[1.25rem] !mb-2">{h.title}</h3>
+            <p class="font-ui text-[0.92rem] muted !m-0">{h.text}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {/* ── Welcome from the AMS ── */}
+  <section class="section band">
+    <div class="container container-narrow">
+      <div class="flex flex-col sm:flex-row gap-8 items-start">
+        <div class="avatar-placeholder w-28 h-28 shrink-0 font-ui text-3xl" aria-hidden="true">DW</div>
+        <div>
+          <p class="eyebrow !mb-2">
+            A welcome from our {ASSOCIATION.amsTitle}
+            {SAMPLE_CONTENT && <span class="tag-sample ml-2">sample</span>}
+          </p>
+          <div class="prose text-[1.1rem]">
+            <Welcome.Content />
+          </div>
+          <p class="font-ui mt-4 !mb-0">
+            <strong>{ASSOCIATION.amsName}</strong>
+            <span class="muted"> · {ASSOCIATION.amsTitle}</span>
+          </p>
+          <a class="btn btn-ghost mt-5" href="/about/">Read the full welcome →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ── Church preview strip ── */}
+  <section class="section">
+    <div class="container container-wide">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-10">
+        <div>
+          <p class="eyebrow">Our churches</p>
+          <h2 class="!mb-0">A church family near you</h2>
+        </div>
+        <a class="btn btn-primary" href="/find-a-church/">See all {ASSOCIATION.churchCount} churches</a>
+      </div>
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {previewChurches.map((c) => <ChurchCard church={c} />)}
+      </div>
+      <p class="font-ui text-[0.9rem] muted mt-6">
+        Every church has its own page with service times, directions, and contact
+        info — and each one wears its own color.
+      </p>
+    </div>
+  </section>
+
+  {/* ── Find-a-church CTA ── */}
+  <section class="band-accent section">
+    <div class="container text-center">
+      <h2 class="!mb-3">Looking for a church home?</h2>
+      <p class="font-ui max-w-[52ch] mx-auto opacity-90 !mb-7">
+        Type your address and we'll show you the closest congregations — or
+        browse the whole family of churches across Blount County.
+      </p>
+      <a class="btn btn-on-accent" href="/find-a-church/">
+        <Icon name="pin" class="w-4 h-4" />
+        Find a church near me
+      </a>
+    </div>
+  </section>
+</Base>

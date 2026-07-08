@@ -1,0 +1,106 @@
+---
+import Base from '../layouts/Base.astro';
+import { ASSOCIATION, SAMPLE_CONTENT } from '../config';
+import { OFFICERS } from '../content/site-data';
+import * as Letter from '../content/about-letter.md';
+import * as WhoWeAre from '../content/about-who-we-are.md';
+import * as Explainer from '../content/about-association-explainer.md';
+import * as MissionVision from '../content/mission-vision.md';
+---
+
+<Base
+  title={`About — ${ASSOCIATION.name}`}
+  description={`About the ${ASSOCIATION.name}: Southern Baptist churches serving Blount County, Alabama since ${ASSOCIATION.organized}.`}
+>
+  <section class="section-tight band">
+    <div class="container">
+      <p class="eyebrow">About us</p>
+      <h1>One family of churches, one mission</h1>
+      <p class="lede">
+        Southern Baptist churches serving Blount County, Alabama — together
+        since {ASSOCIATION.organized}.
+      </p>
+    </div>
+  </section>
+
+  {/* ── Welcome letter ── */}
+  <section class="section">
+    <div class="container container-narrow">
+      <div class="flex items-start gap-6 mb-8">
+        <div class="avatar-placeholder w-24 h-24 shrink-0 font-ui text-2xl" aria-hidden="true">DW</div>
+        <div>
+          <p class="eyebrow !mb-1">
+            A welcome from {ASSOCIATION.amsName}
+            {SAMPLE_CONTENT && <span class="tag-sample ml-2">sample letter</span>}
+          </p>
+          <p class="font-ui text-[0.9rem] muted !m-0">{ASSOCIATION.amsTitle}</p>
+        </div>
+      </div>
+      <div class="prose">
+        <Letter.Content />
+      </div>
+      {SAMPLE_CONTENT && (
+        <p class="notice mt-8 !mb-0">
+          The letter above is realistic placeholder text so the page reads
+          finished — the AMS's real letter, bio, and photo will replace it.
+        </p>
+      )}
+    </div>
+  </section>
+
+  {/* ── Mission & vision ── */}
+  <section class="band-accent section-tight">
+    <div class="container container-narrow text-center">
+      <p class="eyebrow">Mission &amp; vision {SAMPLE_CONTENT && '— draft for review'}</p>
+      <div class="prose mx-auto text-[1.15rem]">
+        <MissionVision.Content />
+      </div>
+    </div>
+  </section>
+
+  {/* ── Who we are ── */}
+  <section class="section">
+    <div class="container container-narrow">
+      <p class="eyebrow">Who we are</p>
+      <h2>Our story</h2>
+      <div class="prose">
+        <WhoWeAre.Content />
+      </div>
+    </div>
+  </section>
+
+  {/* ── What is an association? ── */}
+  <section class="section band">
+    <div class="container container-narrow">
+      <p class="eyebrow">Good question</p>
+      <h2>What is a Baptist association?</h2>
+      <div class="prose">
+        <Explainer.Content />
+      </div>
+    </div>
+  </section>
+
+  {/* ── Officers & staff ── */}
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Officers &amp; staff</p>
+      <h2>Who serves the association</h2>
+      {SAMPLE_CONTENT && (
+        <p class="font-ui text-[0.9rem] muted">
+          Placeholder roles shown — names and photos to be provided by the association office.
+        </p>
+      )}
+      <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {OFFICERS.map((o) => (
+          <div class="card text-center">
+            <div class="avatar-placeholder w-20 h-20 mx-auto font-ui text-xl mb-4" aria-hidden="true">
+              {o.placeholder ? '?' : o.name.split(' ').map((n) => n[0]).join('')}
+            </div>
+            <p class="font-ui font-semibold !mb-1" class:list={[o.placeholder && 'muted']}>{o.name}</p>
+            <p class="font-ui text-[0.85rem] muted !m-0">{o.role}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>

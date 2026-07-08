@@ -32,7 +32,7 @@ const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${enco
       <h3 class="!mb-0 text-[1.35rem] leading-snug">
         <a href={`/churches/${c.slug}/`} class="no-underline" style="color: var(--text);">{c.name}</a>
       </h3>
-      <span class="distance-pill pill-solid pill hidden whitespace-nowrap mt-1" aria-label="distance from your location"></span>
+      <span class="distance-pill pill-solid pill !hidden whitespace-nowrap mt-1" aria-label="distance from your location"></span>
     </div>
     <p class="font-ui text-[0.9rem] muted !m-0">{c.address}</p>
     {c.serviceTimes && (

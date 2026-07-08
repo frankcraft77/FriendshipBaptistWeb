@@ -54,7 +54,7 @@ const clientData = {
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
           Use my location
         </button>
-        <button id="clear-location-btn" class="btn btn-ghost hidden" type="button">Clear</button>
+        <button id="clear-location-btn" class="btn btn-ghost !hidden" type="button">Clear</button>
       </div>
 
       <div id="tool-notice" class="notice mt-4 hidden max-w-3xl" role="status"></div>
@@ -180,9 +180,9 @@ const clientData = {
         if (pill) {
           if (d !== null && matches) {
             pill.textContent = d < 10 ? `${d.toFixed(1)} mi` : `${Math.round(d)} mi`;
-            pill.classList.remove('hidden');
+            pill.classList.remove('!hidden');
           } else {
-            pill.classList.add('hidden');
+            pill.classList.add('!hidden');
           }
         }
       }
@@ -195,7 +195,7 @@ const clientData = {
 
     function setUserLocation(loc: { lat: number; lng: number } | null, label?: string) {
       userLocation = loc;
-      els.clearBtn.classList.toggle('hidden', !loc);
+      els.clearBtn.classList.toggle('!hidden', !loc);
       refreshList();
       if (map) updateMapForLocation(label);
     }

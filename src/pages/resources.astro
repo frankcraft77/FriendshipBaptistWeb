@@ -1,0 +1,56 @@
+---
+import Base from '../layouts/Base.astro';
+import { ASSOCIATION, SAMPLE_CONTENT } from '../config';
+import { SAMPLE_RESOURCES } from '../content/site-data';
+---
+
+<Base
+  title={`Resources — ${ASSOCIATION.name}`}
+  description="Documents, forms, and links for pastors and member churches of the Friendship Baptist Association."
+>
+  <section class="section-tight band">
+    <div class="container">
+      <p class="eyebrow">Resources</p>
+      <h1>For pastors &amp; member churches</h1>
+      <p class="lede">
+        Documents, forms, and helpful links — all in one place.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container container-narrow">
+      {SAMPLE_CONTENT && (
+        <p class="notice mb-8">
+          The list below is a sample layout — placeholder documents showing how
+          a real resource library will look. The association office will supply
+          actual files, and each one becomes a working download link.
+        </p>
+      )}
+      <ul class="list-none p-0 m-0 flex flex-col gap-4">
+        {SAMPLE_RESOURCES.map((r) => (
+          <li>
+            <a class="card card-hover no-underline flex items-center gap-4 !py-4" href={r.href} aria-disabled={r.href === '#'}>
+              <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl shrink-0" style="background: color-mix(in srgb, var(--accent), transparent 88%); color: var(--accent);">
+                <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M13 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8zM13 3v5h5M9.5 13h5M9.5 16.5h5" />
+                </svg>
+              </span>
+              <span>
+                <span class="font-ui font-semibold block" style="color: var(--text);">
+                  {r.title}
+                  {SAMPLE_CONTENT && <span class="tag-sample ml-2">placeholder</span>}
+                </span>
+                <span class="font-ui text-[0.85rem] muted">{r.note}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p class="font-ui text-[0.9rem] muted mt-8">
+        Everything here is public for now. If the association later wants a
+        members-only area for sensitive documents, that can be added.
+      </p>
+    </div>
+  </section>
+</Base>

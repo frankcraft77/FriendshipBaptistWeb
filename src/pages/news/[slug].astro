@@ -1,0 +1,31 @@
+---
+import Base from '../../layouts/Base.astro';
+import { ASSOCIATION, SAMPLE_CONTENT } from '../../config';
+
+export async function getStaticPaths() {
+  const modules = import.meta.glob('../../content/news/*.md', { eager: true }) as Record<string, any>;
+  return Object.entries(modules).map(([path, mod]) => ({
+    params: { slug: path.split('/').pop()!.replace(/\.md$/, '') },
+    props: { frontmatter: mod.frontmatter, Content: mod.Content },
+  }));
+}
+
+const { frontmatter, Content } = Astro.props;
+const fmtDate = (d: string) =>
+  new Date(d + 'T12:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+
+<Base title={`${frontmatter.title} — ${ASSOCIATION.name}`} description={frontmatter.excerpt}>
+  <article class="section">
+    <div class="container container-narrow">
+      <p class="font-ui text-[0.85rem] muted !mb-3">
+        <a href="/news/">← All news</a> · {fmtDate(frontmatter.date)}
+        {SAMPLE_CONTENT && frontmatter.sample && <span class="tag-sample ml-2">sample post</span>}
+      </p>
+      <h1 class="!text-[2.6rem]">{frontmatter.title}</h1>
+      <div class="prose mt-6">
+        <Content />
+      </div>
+    </div>
+  </article>
+</Base>

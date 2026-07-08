@@ -1,0 +1,30 @@
+---
+/** Tiny inline icon set used by highlight cards. Stroke inherits currentColor. */
+interface Props {
+  name: 'church' | 'globe' | 'heart' | 'book' | 'pin' | 'calendar';
+  class?: string;
+}
+const { name, class: className = 'w-6 h-6' } = Astro.props;
+
+const paths: Record<string, string> = {
+  church: 'M12 3v4M10 5h4M6 13l6-5 6 5M8 12v8h8v-8M11 20v-3a1 1 0 0 1 2 0v3',
+  globe: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9z',
+  heart: 'M12 20s-7-4.5-9-9c-1.2-2.8.4-6 3.5-6 2 0 3.5 1 5.5 3.5C14 6 15.5 5 17.5 5c3.1 0 4.7 3.2 3.5 6-2 4.5-9 9-9 9z',
+  book: 'M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5zM4 20.5V5.5M20 18v3H6.5M9 8h7M9 11.5h7',
+  pin: 'M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11zM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+  calendar: 'M5 6h14a1 1 0 0 1 1 1v13H4V7a1 1 0 0 1 1-1zM8 3v5M16 3v5M4 11h16',
+};
+---
+
+<svg
+  viewBox="0 0 24 24"
+  class={className}
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.8"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+>
+  <path d={paths[name]} />
+</svg>

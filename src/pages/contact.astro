@@ -1,0 +1,93 @@
+---
+import Base from '../layouts/Base.astro';
+import { ASSOCIATION, ENV, SAMPLE_CONTENT } from '../config';
+
+const mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${ASSOCIATION.name}, ${ASSOCIATION.officeAddress}`)}&z=15&output=embed`;
+const hasFormHandler = !!ENV.contactFormEndpoint;
+---
+
+<Base
+  title={`Contact — ${ASSOCIATION.name}`}
+  description={`Contact the ${ASSOCIATION.name} office in ${ASSOCIATION.officeCity}.`}
+>
+  <section class="section-tight band">
+    <div class="container">
+      <p class="eyebrow">Contact</p>
+      <h1>We'd love to hear from you</h1>
+      <p class="lede">
+        Questions about a church, an event, or how to get involved — the
+        office is here to help.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container grid gap-10 lg:grid-cols-2">
+      <div>
+        <h2 class="!text-[1.7rem]">The association office</h2>
+        <ul class="list-none p-0 m-0 mt-5 space-y-3 font-ui">
+          <li>
+            <strong>Address:</strong> {ASSOCIATION.officeAddress}
+          </li>
+          <li>
+            <strong>Phone:</strong> {ASSOCIATION.officePhone}
+            {SAMPLE_CONTENT && <span class="tag-sample ml-2">confirm</span>}
+          </li>
+          <li>
+            <strong>Email:</strong> {ASSOCIATION.officeEmail}
+            {SAMPLE_CONTENT && <span class="tag-sample ml-2">confirm</span>}
+          </li>
+          <li>
+            <strong>Office hours:</strong> {ASSOCIATION.officeHours}
+            {SAMPLE_CONTENT && <span class="tag-sample ml-2">confirm</span>}
+          </li>
+          <li>
+            <strong>Facebook:</strong>
+            <a href={ASSOCIATION.facebook} rel="noopener" target="_blank">facebook.com/friendshipba</a>
+          </li>
+        </ul>
+
+        <div class="rounded-[var(--radius)] overflow-hidden border mt-8" style="border-color: var(--card-border);">
+          <iframe
+            src={mapEmbedUrl}
+            title={`Map to the ${ASSOCIATION.name} office`}
+            class="w-full"
+            style="height: 300px; border: 0;"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="!text-[1.7rem]">Send a message</h2>
+        {hasFormHandler ? (
+          <form class="card mt-5 flex flex-col gap-4 font-ui" action={ENV.contactFormEndpoint} method="POST">
+            <div>
+              <label for="cf-name">Your name</label>
+              <input id="cf-name" name="name" type="text" required autocomplete="name" class="mt-1" />
+            </div>
+            <div>
+              <label for="cf-email">Email address</label>
+              <input id="cf-email" name="email" type="email" required autocomplete="email" class="mt-1" />
+            </div>
+            <div>
+              <label for="cf-message">How can we help?</label>
+              <textarea id="cf-message" name="message" rows="6" required class="mt-1"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary self-start">Send message</button>
+          </form>
+        ) : (
+          <div class="card mt-5">
+            <p class="notice !mb-4">
+              The contact form goes live once a form handler is connected (a
+              five-minute Formspree setup — see the README). Until then, reach
+              us directly:
+            </p>
+            <a class="btn btn-primary" href={`mailto:${ASSOCIATION.officeEmail}`}>Email the office</a>
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+</Base>

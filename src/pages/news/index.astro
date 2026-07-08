@@ -1,0 +1,54 @@
+---
+import Base from '../../layouts/Base.astro';
+import { ASSOCIATION, SAMPLE_CONTENT } from '../../config';
+
+// News posts are markdown files in src/content/news/ — add a new .md file
+// there (with title/date/excerpt frontmatter) and it appears here.
+const modules = import.meta.glob('../../content/news/*.md', { eager: true }) as Record<string, any>;
+const posts = Object.entries(modules)
+  .map(([path, mod]) => ({
+    slug: path.split('/').pop()!.replace(/\.md$/, ''),
+    ...mod.frontmatter,
+  }))
+  .sort((a, b) => (a.date < b.date ? 1 : -1));
+
+const fmtDate = (d: string) =>
+  new Date(d + 'T12:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+
+<Base
+  title={`News & Updates — ${ASSOCIATION.name}`}
+  description="News and ministry updates from around the Friendship Baptist Association."
+>
+  <section class="section-tight band">
+    <div class="container">
+      <p class="eyebrow">News &amp; updates</p>
+      <h1>From around the association</h1>
+      <p class="lede">
+        Stories, announcements, and ministry highlights from our churches.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container container-narrow flex flex-col gap-6">
+      {posts.map((p) => (
+        <a class="card card-hover no-underline" href={`/news/${p.slug}/`}>
+          <p class="font-ui text-[0.8rem] muted !mb-2">
+            {fmtDate(p.date)}
+            {SAMPLE_CONTENT && p.sample && <span class="tag-sample ml-2">sample post</span>}
+          </p>
+          <h2 class="!text-[1.6rem] !mb-2">{p.title}</h2>
+          <p class="font-ui text-[0.95rem] muted !m-0">{p.excerpt}</p>
+        </a>
+      ))}
+      {SAMPLE_CONTENT && (
+        <p class="notice">
+          These are sample posts showing how updates could be shared. The News
+          section is optional — it's easy to remove if the association prefers
+          to share updates on Facebook only.
+        </p>
+      )}
+    </div>
+  </section>
+</Base>

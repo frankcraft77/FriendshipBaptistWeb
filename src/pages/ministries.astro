@@ -1,0 +1,53 @@
+---
+import Base from '../layouts/Base.astro';
+import { ASSOCIATION, SAMPLE_CONTENT } from '../config';
+import { MINISTRIES } from '../content/site-data';
+---
+
+<Base
+  title={`Ministries — ${ASSOCIATION.name}`}
+  description="How the Friendship Baptist Association serves its member churches: church health, pastor care, missions, VBS support, and more."
+>
+  <section class="section-tight band">
+    <div class="container">
+      <p class="eyebrow">Ministries</p>
+      <h1>What we do</h1>
+      <p class="lede">
+        The association exists to serve its churches. Here's what that looks
+        like in practice.
+        {SAMPLE_CONTENT && <span class="tag-sample ml-2">sample descriptions</span>}
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {MINISTRIES.map((m) => (
+          <div class="card card-hover">
+            <h3 class="!text-[1.3rem] !mb-2">{m.title}</h3>
+            <p class="font-ui text-[0.93rem] muted !m-0">{m.text}</p>
+          </div>
+        ))}
+      </div>
+      {SAMPLE_CONTENT && (
+        <p class="notice mt-10">
+          These cards describe ministries typical of a Baptist association —
+          realistic samples for the owner to keep, edit, or remove to match the
+          association's actual work.
+        </p>
+      )}
+    </div>
+  </section>
+
+  <section class="band-accent section-tight">
+    <div class="container text-center">
+      <h2 class="!mb-3">Need help from the association?</h2>
+      <p class="font-ui opacity-90 !mb-6 max-w-[50ch] mx-auto">
+        If your church could use support with any of these ministries, the
+        office would love to hear from you.
+      </p>
+      <a class="btn btn-on-accent" href="/contact/">Contact us</a>
+    </div>
+  </section>
+</Base>

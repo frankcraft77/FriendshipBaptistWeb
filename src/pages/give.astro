@@ -1,0 +1,52 @@
+---
+import Base from '../layouts/Base.astro';
+import { ASSOCIATION, SAMPLE_CONTENT } from '../config';
+import * as GiveInfo from '../content/give-info.md';
+---
+
+<Base
+  title={`Give — ${ASSOCIATION.name}`}
+  description="Supporting the shared ministry of the Friendship Baptist Association and its member churches."
+>
+  <section class="section-tight band">
+    <div class="container">
+      <p class="eyebrow">Give</p>
+      <h1>Generosity that multiplies</h1>
+      <p class="lede">
+        How giving works in our family of churches — and where online giving
+        stands.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container container-narrow">
+      <div class="prose">
+        <GiveInfo.Content />
+      </div>
+
+      {/*
+        ── ONLINE GIVING EMBED GOES HERE ─────────────────────────────────
+        When the association chooses a provider (Tithe.ly, Stripe Payment
+        Links, or PayPal Giving Fund — see README "Online giving"), replace
+        this placeholder card with the provider's embed code or button.
+      */}
+      <div class="card mt-10 text-center !py-10">
+        <p class="eyebrow !mb-2">Online giving</p>
+        <h2 class="!text-[1.6rem] !mb-3">Coming soon</h2>
+        <p class="font-ui text-[0.95rem] muted max-w-[46ch] mx-auto !mb-6">
+          A simple, secure way to give online is being considered. Until then,
+          the surest way to give is through your local church.
+        </p>
+        <a class="btn btn-primary" href="/find-a-church/">Find your church</a>
+      </div>
+
+      {SAMPLE_CONTENT && (
+        <p class="font-ui text-[0.85rem] muted mt-6">
+          The copy above is sample text explaining cooperative giving — for the
+          owner to review while the giving decision is made.
+        </p>
+      )}
+    </div>
+  </section>
+</Base>
