@@ -1,0 +1,23 @@
+# Website editor — access rules.
+# Blocks direct web access to the settings file, the code library, backups,
+# and logs. Only index.php, make-password.php, editor.css and editor.js are
+# meant to be opened in a browser.
+
+# Never serve the settings or library files.
+<Files "config.php">
+  Require all denied
+</Files>
+<Files "lib.php">
+  Require all denied
+</Files>
+
+# Never serve backups, logs, or other private data files.
+<FilesMatch "\.(bak|log|json)$">
+  Require all denied
+</FilesMatch>
+
+# The ._backups/ and ._data/ folders also each get their own "deny"
+# .htaccess written automatically when they are created.
+
+# No directory listings.
+Options -Indexes

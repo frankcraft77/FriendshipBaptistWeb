@@ -19,8 +19,8 @@ const previewChurches = churches.slice(0, 3);
   >
     <div class="container text-center flex flex-col items-center fade-in-up" style="padding-block: 2.5rem;">
       <p class="eyebrow">{ASSOCIATION.churchCount} Southern Baptist churches · Blount County, Alabama · since {ASSOCIATION.organized}</p>
-      <h1 class="max-w-[17ch]">Churches together, for Blount County and the world</h1>
-      <p class="lede mt-4 mx-auto">
+      <h1 class="max-w-[17ch]" data-editable="true" data-editable-label="Homepage headline">Churches together, for Blount County and the world</h1>
+      <p class="lede mt-4 mx-auto" data-editable="true" data-editable-label="Homepage intro sentence">
         We're a family of local churches helping each other love God, love our
         neighbors, and share the hope of Jesus — and there's a place for you.
       </p>
@@ -38,7 +38,7 @@ const previewChurches = churches.slice(0, 3);
   {/* ── Mission band ── */}
   <section class="band-accent section-tight">
     <div class="container text-center">
-      <p class="font-display text-[clamp(1.5rem,3.5vw,2.2rem)] leading-snug !m-0" style="font-family: var(--font-display);">
+      <p class="font-display text-[clamp(1.5rem,3.5vw,2.2rem)] leading-snug !m-0" style="font-family: var(--font-display);" data-editable="true" data-editable-label="Mission statement (blue band)">
         Helping our churches help each other reach Blount County —<br class="hidden md:block" />
         and the world — with the gospel.
       </p>
@@ -75,7 +75,7 @@ const previewChurches = churches.slice(0, 3);
             A welcome from our {ASSOCIATION.amsTitle}
             {SAMPLE_CONTENT && <span class="tag-sample ml-2">sample</span>}
           </p>
-          <div class="prose text-[1.1rem]">
+          <div class="prose text-[1.1rem]" data-editable="true" data-editable-label="Welcome message from the AMS">
             <Welcome.Content />
           </div>
           <p class="font-ui mt-4 !mb-0">
@@ -111,8 +111,8 @@ const previewChurches = churches.slice(0, 3);
   {/* ── Find-a-church CTA ── */}
   <section class="band-accent section">
     <div class="container text-center">
-      <h2 class="!mb-3">Looking for a church home?</h2>
-      <p class="font-ui max-w-[52ch] mx-auto opacity-90 !mb-7">
+      <h2 class="!mb-3" data-editable="true" data-editable-label="Bottom banner headline">Looking for a church home?</h2>
+      <p class="font-ui max-w-[52ch] mx-auto opacity-90 !mb-7" data-editable="true" data-editable-label="Bottom banner text">
         Type your address and we'll show you the closest congregations — or
         browse the whole family of churches across Blount County.
       </p>

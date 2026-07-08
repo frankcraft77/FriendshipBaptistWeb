@@ -1,0 +1,153 @@
+/* Website editor — one small stylesheet. Large type, high contrast,
+   comfortable tap targets; loosely matches the site's warm look. */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #f4ecdd;
+  color: #2c3542;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.wrap {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 6rem;
+}
+.wrap-narrow { max-width: 26rem; padding-top: 3rem; }
+
+h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.9rem;
+  line-height: 1.2;
+  margin: 0.5rem 0 1rem;
+}
+.subtitle { font-size: 1.2rem; color: #5d6b7c; font-weight: normal; }
+
+a { color: #2f5d8f; }
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+.topbar .right { margin-left: auto; }
+
+/* Friendly rebuild warning — visible but not alarming */
+.warning {
+  background: #fdf4e3;
+  border: 1px solid #e0c98f;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  font-size: 0.95rem;
+  color: #6b5416;
+}
+
+.hint { font-size: 0.95rem; color: #5d6b7c; }
+
+/* Messages */
+.msg {
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  margin: 0 0 1rem;
+  font-size: 1rem;
+}
+.msg-ok  { background: #e7f2e4; border: 1px solid #9dc192; color: #285b2a; }
+.msg-bad { background: #f9e8e3; border: 1px solid #dfa08d; color: #8a2f16; }
+
+/* Cards & forms */
+.card {
+  background: #fdf9f1;
+  border: 1px solid #ddc9a6;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+input[type="text"], input[type="password"], textarea {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: #fdf9f1;
+  border: 1.5px solid #c9b68d;
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  min-height: 3rem;
+}
+textarea { resize: vertical; }
+input:focus, textarea:focus {
+  outline: 3px solid rgba(47, 93, 143, 0.4);
+  border-color: #2f5d8f;
+}
+
+.field { margin-bottom: 1.15rem; }
+
+/* Buttons — big and obvious */
+.btn {
+  display: inline-block;
+  font: inherit;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #fdf9f1;
+  background: #2f5d8f;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 1.8rem;
+  cursor: pointer;
+  min-height: 3.2rem;
+}
+.btn:hover { background: #274e79; }
+.btn-quiet {
+  background: transparent;
+  color: #8a2f16;
+  border: 1.5px solid #dfa08d;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.btn-quiet:hover { background: #f9e8e3; }
+
+/* Sticky save bar so the button is always reachable on long pages */
+.savebar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(244, 236, 221, 0.95);
+  border-top: 1px solid #ddc9a6;
+  padding: 0.9rem 0;
+  margin-top: 1rem;
+}
+.savebar-note { font-size: 0.85rem; color: #5d6b7c; }
+
+.undo-form { margin-top: 2.5rem; }
+
+/* Page list */
+.pagelist { list-style: none; margin: 1rem 0 0; padding: 0; }
+.pagelist li { margin-bottom: 0.6rem; }
+.pagelist a {
+  display: block;
+  background: #fdf9f1;
+  border: 1px solid #ddc9a6;
+  border-radius: 12px;
+  padding: 0.85rem 1.1rem;
+  text-decoration: none;
+  color: inherit;
+}
+.pagelist a:hover { border-color: #2f5d8f; }
+.pagelist strong { display: block; font-size: 1.1rem; }
+.pagelist span { font-size: 0.85rem; color: #5d6b7c; }

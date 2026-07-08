@@ -207,6 +207,11 @@ Once purchased, set `PUBLIC_SITE_URL` in `.env` to the domain and rebuild
    use File Manager's **Extract**, making sure `index.html` ends up directly
    inside `public_html`.
 5. Visit your domain — the site is live.
+6. *(Optional)* Also upload the repo's **`editor/`** folder into
+   `public_html` — a small password-protected tool for editing the site's
+   text right on the server, no rebuild needed for quick word changes.
+   Setup steps: `editor/README-EDITOR.md`. (Remember: rebuilding and
+   re-uploading the site replaces those on-server edits.)
 
 > **Remember:** the site reads the Google Sheet **at build time**. Updating
 > churches = re-run `npm run build` and re-upload `dist/`. If that gets
