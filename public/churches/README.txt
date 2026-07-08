@@ -1,0 +1,1 @@
+Church photos placed in this folder can be referenced from the spreadsheet by bare filename (e.g. "bethel.jpg" in the photo column). Cloudinary URLs are the recommended path -- see README "Church photos".

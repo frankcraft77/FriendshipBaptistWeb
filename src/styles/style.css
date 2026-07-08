@@ -287,6 +287,13 @@ label { font-family: var(--font-ui); font-weight: 600; font-size: 0.9rem; }
 .site-nav a:hover { background: color-mix(in srgb, var(--accent), transparent 91%); color: var(--accent); }
 .site-nav a[aria-current="page"] { color: var(--accent); font-weight: 600; }
 
+/* Sample tag sits on the dark footer too — lighten it there for contrast. */
+.site-footer .tag-sample {
+  background: transparent;
+  color: #f3b9a6;
+  border-color: color-mix(in srgb, #f3b9a6, transparent 45%);
+}
+
 /* ── Footer ────────────────────────────────────────────────────────────── */
 
 .site-footer {

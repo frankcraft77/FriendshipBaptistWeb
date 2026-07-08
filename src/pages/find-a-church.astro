@@ -88,6 +88,7 @@ const clientData = {
       </div>
 
       <div id="list-panel">
+        <h2 class="sr-only">All member churches</h2>
         <p id="result-count" class="font-ui text-[0.9rem] muted mb-5" role="status"></p>
         <div id="church-grid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {churches.map((c) => <ChurchCard church={c} />)}
