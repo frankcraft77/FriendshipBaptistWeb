@@ -28,22 +28,23 @@
    ========================================================================== */
 
 :root {
-  /* Surfaces — warm cream, lighter card, subtle inset */
-  --bg:             #f4ecdd;   /* page background (warm cream)            */
-  --bg-card:        #fdf9f1;   /* card surface (a step lighter than bg)   */
-  --bg-inset:       #efe4d0;   /* input fields / wells inside cards       */
-  --card-border:    #ddc9a6;   /* subtle card outline                     */
+  /* Surfaces — Cool off-white / light gray tones */
+  --bg:             #f8f9f8;   /* Main page background - soft cool white     */
+  --bg-card:        #ffffff;   /* Cards - bright clean white                 */
+  --bg-inset:       #f1f3f2;   /* Inputs / inset areas - very light cool gray*/
+  --card-border:    #e5e8e6;   /* Subtle borders - soft cool gray            */
 
-  /* Text — deep warm brown-navy for readability on cream */
-  --text:           #2c3542;   /* main reading text                       */
-  --text-muted:     #5d6b7c;   /* secondary text, icons, placeholders     */
+  /* Text — Cool dark slate for excellent readability */
+  --text:           #1f2a37;   /* Main text - deep cool slate                */
+  --text-muted:     #64748b;   /* Secondary text, icons, helpers             */
 
-  /* Accent — deep blue (site default; per-church presets override this) */
-  --accent:         #2f5d8f;   /* recolors buttons, pills, links, focus   */
-  --accent-contrast:#fdf9f1;   /* text on top of the accent color         */
+  /* Accent — Keep or adjust the blue (this one pairs beautifully) */
+  --accent:         #2f5d8f;   /* Deep blue - works great with cool whites   */
+  --accent-contrast:#ffffff;   /* White text on accent (changed for contrast)*/
 
-  --progress-track: #e3d5ba;   /* inactive progress track                 */
-  --error:          #a63d24;   /* inline validation                       */
+  --progress-track: #e2e8f0;   /* Cool light gray for progress bars          */
+  --error:          #b4533d;   /* Softened red for errors                    */
+
 
   /* Type — elegant serif + sans system (see README "Design language") */
   --font-display:   "Cormorant Garamond", "EB Garamond", Georgia, serif;   /* headlines */
