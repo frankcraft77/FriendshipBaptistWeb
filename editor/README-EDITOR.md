@@ -71,6 +71,16 @@ Good to know:
 - You'll be logged out automatically after 30 minutes of inactivity.
 - It works fine on a phone or tablet.
 
+**If you ever see "Your changes could not be read…":** your browser is
+showing an old copy of the editor (usually right after the editor was
+updated on the server). Nothing was lost or changed — press **Ctrl+F5**
+(Windows) or **Cmd+Shift+R** (Mac) to fully refresh the page, then make
+your edits and save again. Two related rules of thumb:
+
+- When updating the editor, always upload the **whole** `editor` folder,
+  not individual files.
+- After any editor update, do one hard refresh (Ctrl+F5) before editing.
+
 ---
 
 ## For the developer

@@ -1,5 +1,26 @@
 /* Website editor — rich-text fields and small conveniences. No dependencies. */
 
+// Prove to the server that this script actually ran: without this marker a
+// save is refused with a "please refresh" message instead of silently
+// discarding edits (which is what happened when an old cached copy of this
+// file was still in play).
+document.querySelectorAll('input[name="js"]').forEach(function (input) {
+  input.value = '1';
+});
+
+// Keep every rich-text box's hidden input up to date continuously, so the
+// posted form always carries the current content even if something
+// interferes with the submit event.
+function syncRte(rte) {
+  var input = document.querySelector('input[data-rte-for="' + rte.id + '"]');
+  if (input) input.value = rte.innerHTML;
+}
+document.querySelectorAll('.rte').forEach(function (rte) {
+  syncRte(rte); // initial value = the unedited content
+  rte.addEventListener('input', function () { syncRte(rte); });
+  rte.addEventListener('blur', function () { syncRte(rte); });
+});
+
 // ── Rich text areas ──
 // Each .rte is a contenteditable box; its HTML is copied into a hidden input
 // when the form is submitted. Toolbar buttons use the browser's built-in
@@ -54,7 +75,8 @@ document.querySelectorAll('.rte').forEach(function (rte) {
   });
 });
 
-// Copy every rich-text box into its hidden input on submit.
+// Copy every rich-text box into its hidden input once more at submit
+// (belt and braces — covers toolbar-only changes with no input event).
 var editForm = document.getElementById('edit-form');
 if (editForm) {
   editForm.addEventListener('submit', function () {

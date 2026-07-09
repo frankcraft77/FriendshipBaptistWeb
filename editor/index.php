@@ -10,6 +10,36 @@ declare(strict_types=1);
 
 require __DIR__ . '/lib.php';
 
+const SCRIPT_FAILED_MESSAGE =
+    'Your changes could not be read — the editor\'s helper script didn\'t load ' .
+    '(this can happen right after an update, when the browser is still showing ' .
+    'an old copy). Press Ctrl+F5 (or Cmd+Shift+R on a Mac) to fully refresh ' .
+    'this page, then make your changes and save again. Nothing was changed.';
+
+/**
+ * True when a save POST clearly did not come through the editor's script —
+ * the "js" marker is missing/unset or every field arrived empty. Saving in
+ * that state would silently discard the user's edits (this exact failure
+ * happened with a stale cached editor.js), so it is refused with a clear
+ * message instead.
+ */
+function post_missing_editor_script(): bool
+{
+    if (($_POST['js'] ?? '') !== '1') {
+        return true;
+    }
+    $fields = $_POST['field'] ?? [];
+    if (!is_array($fields) || $fields === []) {
+        return true;
+    }
+    foreach ($fields as $value) {
+        if (trim((string) $value) !== '') {
+            return false;
+        }
+    }
+    return true;
+}
+
 editor_session_start();
 
 $action = (string) ($_REQUEST['action'] ?? '');
@@ -56,6 +86,8 @@ try {
             $abs = safe_page_path($rel);
             if ($abs === null) {
                 $error = 'That page could not be found.';
+            } elseif (post_missing_editor_script()) {
+                $error = SCRIPT_FAILED_MESSAGE;
             } else {
                 $changed = save_page($abs, (string) ($_POST['filehash'] ?? ''), $_POST['field'] ?? []);
                 $_SESSION['flash_notice'] = $changed > 0
@@ -71,6 +103,8 @@ try {
     if ($action === 'save-shared' && $_SERVER['REQUEST_METHOD'] === 'POST' && is_logged_in()) {
         if (!csrf_valid()) {
             $error = 'That form had expired. Your changes were not saved — please try again.';
+        } elseif (post_missing_editor_script()) {
+            $error = SCRIPT_FAILED_MESSAGE;
         } else {
             [$sections, $files] = save_shared($_POST['field'] ?? []);
             $_SESSION['flash_notice'] = $sections > 0
@@ -109,18 +143,25 @@ try {
 
 function page_head(string $title): void
 {
+    // Editor screens must never be served from a cache: they carry the CSRF
+    // token and the page's file hash, both of which go stale.
+    if (!headers_sent()) {
+        header('Cache-Control: no-store, max-age=0');
+    }
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8">';
     echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
     echo '<meta name="robots" content="noindex, nofollow">';
     echo '<title>' . e($title) . '</title>';
-    echo '<link rel="stylesheet" href="editor.css">';
+    // ?v=… busts browser/host caches whenever the editor is updated.
+    echo '<link rel="stylesheet" href="editor.css?v=' . e(EDITOR_VERSION) . '">';
     echo '</head><body>';
 }
 
 function page_foot(): void
 {
-    echo '<script src="editor.js"></script></body></html>';
+    echo '<script src="editor.js?v=' . e(EDITOR_VERSION) . '"></script></body></html>';
 }
+
 
 function show_messages(string $notice, string $error): void
 {
@@ -197,6 +238,7 @@ if ($action === 'edit-shared') {
     } else {
         echo '<form method="post" action="index.php?action=save-shared" id="edit-form">';
         echo '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">';
+        echo '<input type="hidden" name="js" value="">'; // set to 1 by editor.js
         foreach ($fields as $f) {
             render_rich_field($f['id'], $f['label'], $f['html']);
         }
@@ -246,6 +288,7 @@ if ($action === 'edit') {
         echo '<form method="post" action="index.php?action=save" id="edit-form">';
         echo '<noscript><p class="msg msg-bad">This editor needs JavaScript turned on to save changes.</p></noscript>';
         echo '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">';
+        echo '<input type="hidden" name="js" value="">'; // set to 1 by editor.js
         echo '<input type="hidden" name="page" value="' . e($rel) . '">';
         echo '<input type="hidden" name="filehash" value="' . e($filehash) . '">';
         foreach ($fields as $f) {

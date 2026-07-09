@@ -32,6 +32,13 @@ declare(strict_types=1);
 
 require __DIR__ . '/config.php';
 
+/**
+ * Editor release version. Bump this whenever editor.js / editor.css change:
+ * it is appended to their URLs (?v=…) so browsers and hosting caches can
+ * never keep serving an old copy of the script after an upload.
+ */
+const EDITOR_VERSION = '3.1';
+
 /* ── Error handling: never show raw PHP errors to the user ─────────────── */
 
 ini_set('display_errors', '0');
