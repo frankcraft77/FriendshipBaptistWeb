@@ -8,9 +8,9 @@ import { SAMPLE_RESOURCES } from '../content/site-data';
   title={`Resources — ${ASSOCIATION.name}`}
   description="Documents, forms, and links for pastors and member churches of the Friendship Baptist Association."
 >
-  <section class="section-tight band">
+  <section data-edit-label="Top of page — headline and intro" class="section-tight band">
     <div class="container">
-      <div class="contents" data-edit-section="Top of page — headline and intro">
+      <div class="contents">
       <p class="eyebrow">Resources</p>
       <h1>For pastors &amp; member churches</h1>
       <p class="lede">
@@ -20,7 +20,7 @@ import { SAMPLE_RESOURCES } from '../content/site-data';
     </div>
   </section>
 
-  <section class="section">
+  <section data-edit-label="Resource list" class="section">
     <div class="container container-narrow">
       {SAMPLE_CONTENT && (
         <p class="notice mb-8">
@@ -38,7 +38,7 @@ import { SAMPLE_RESOURCES } from '../content/site-data';
                   <path d="M13 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V8zM13 3v5h5M9.5 13h5M9.5 16.5h5" />
                 </svg>
               </span>
-              <span data-edit-section={`Resource item: ${r.title}`}>
+              <span>
                 <span class="font-ui font-semibold block" style="color: var(--text);">
                   {r.title}
                   {SAMPLE_CONTENT && <span class="tag-sample ml-2">placeholder</span>}

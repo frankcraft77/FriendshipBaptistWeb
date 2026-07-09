@@ -9,9 +9,9 @@ import * as MissionsIntro from '../content/missions-intro.md';
   title={`Missions & Get Involved — ${ASSOCIATION.name}`}
   description="Cooperative missions and volunteer opportunities across the Friendship Baptist Association — serve Blount County and beyond."
 >
-  <section class="section-tight band">
+  <section data-edit-label="Top of page — headline and intro" class="section-tight band">
     <div class="container">
-      <div class="contents" data-edit-section="Top of page — headline and intro">
+      <div class="contents">
       <p class="eyebrow">Missions &amp; get involved</p>
       <h1>On mission, together</h1>
       <p class="lede">
@@ -22,9 +22,9 @@ import * as MissionsIntro from '../content/missions-intro.md';
     </div>
   </section>
 
-  <section class="section">
+  <section data-edit-label="Why we work together" class="section">
     <div class="container container-narrow">
-      <div class="contents" data-edit-section="Why we work together">
+      <div class="contents">
       <p class="eyebrow">Cooperative missions {SAMPLE_CONTENT && <span class="tag-sample ml-2">sample</span>}</p>
       <h2>Why we work together</h2>
       <div class="prose">
@@ -34,13 +34,13 @@ import * as MissionsIntro from '../content/missions-intro.md';
     </div>
   </section>
 
-  <section class="section band">
+  <section data-edit-label="Volunteer opportunities" class="section band">
     <div class="container">
       <p class="eyebrow">Ways to serve {SAMPLE_CONTENT && <span class="tag-sample ml-2">samples</span>}</p>
       <h2>Volunteer opportunities</h2>
       <div class="mt-8 grid gap-6 sm:grid-cols-2">
         {VOLUNTEER_OPPORTUNITIES.map((v) => (
-          <div class="card card-hover" data-edit-section={`Volunteer card: ${v.title}`}>
+          <div class="card card-hover">
             <h3 class="!text-[1.25rem] !mb-2">{v.title}</h3>
             <p class="font-ui text-[0.92rem] muted !m-0">{v.text}</p>
           </div>
@@ -49,9 +49,9 @@ import * as MissionsIntro from '../content/missions-intro.md';
     </div>
   </section>
 
-  <section class="band-accent section-tight">
+  <section data-edit-label="Bottom banner" class="band-accent section-tight">
     <div class="container text-center">
-      <div class="contents" data-edit-section="Bottom banner">
+      <div class="contents">
       <h2 class="!mb-3">Ready to get involved?</h2>
       <p class="font-ui opacity-90 !mb-6 max-w-[52ch] mx-auto">
         Tell us how you'd like to serve and we'll connect you with the right

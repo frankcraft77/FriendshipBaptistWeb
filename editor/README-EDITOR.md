@@ -43,14 +43,17 @@ to install on your computer.
 1. Go to `https://YOUR-SITE.org/editor/` and log in.
 2. Pick what to edit:
    - **Header & footer** (top of the list) — the text that repeats at the
-     bottom of every page. Change it here once and it updates the whole
-     website.
+     top and bottom of every page. Change it here once and it updates the
+     whole website.
    - **Any page** — shows only that page's own text, one comfortable box
      per section ("Top of page — headline and intro", "Welcome letter",
      and so on). Menus, buttons, and the footer never appear here, so
      nothing can be broken by accident.
 3. Edit the text right in the box. Each box has simple formatting buttons:
-   **B** (bold), *I* (italic), • list, link, and clear.
+   **B** (bold), *I* (italic), Heading, Normal, • list, link, and clear.
+   Little 🔒 chips ("button", "icon", "form"…) mark parts of the page that
+   can't be changed here — the text around them edits freely, and the real
+   buttons and pictures stay exactly as they are.
 4. Press **Save changes** (the button stays at the bottom of the screen).
    You'll see: *"Saved. Your changes are live."* — refresh the website to
    see them.
@@ -72,52 +75,48 @@ Good to know:
 
 ## For the developer
 
-### How editable sections are defined
+### No manual tagging — pages are editable automatically
 
-The editor shows exactly the regions the templates mark — nothing else:
+The editor reads the site's own HTML structure; **nothing needs to be
+marked page-by-page**:
 
-```html
-<!-- One page section = one rich-text field. The attribute value is the
-     label the user sees. Use class="contents" if the wrapper would
-     otherwise disturb a flex/grid layout. -->
-<div class="contents" data-edit-section="Top of page — headline and intro">
-  <p class="eyebrow">About us</p>
-  <h1>One family of churches, one mission</h1>
-  <p class="lede">…</p>
-</div>
+- Per page, it looks only inside the `<main>` element. Each top-level
+  `<section>` (or `<article>`) inside `<main>` becomes **one rich-text
+  field**. A `<main>` with no sections becomes a single field. Any new page
+  the build produces is instantly editable.
+- Field labels come from the section's `data-edit-label` or `aria-label`
+  if present (the templates set friendly ones), otherwise from the
+  section's first heading — so even unlabeled sections get sensible names.
+- Everything outside `<main>` (header, nav, footer, scripts) is ignored on
+  page screens. The shared layout marks `<header data-edit-shared="header">`
+  and `<footer data-edit-shared="footer">` once; the **Header & Footer**
+  screen edits those and its save loops over every `.html` file, updating
+  the matching region in each (every touched file is backed up first).
+- `churches/*` pages are Sheet-managed: the picker segregates them and
+  their edit screen points the user to the Google Sheet.
 
-<!-- Content repeated on every page (footer blocks). Edited once on the
-     "Header & footer" screen; the save loops over every .html file and
-     updates the matching region in each. -->
-<div data-edit-shared="footer-about"
-     data-edit-label="Footer — about the association (bottom of every page)">
-  …
-</div>
-```
+### Non-text elements are preserved, not stripped
 
-Rules of thumb:
-
-- Mark **text-only containers** (headings, paragraphs, lists, links,
-  spans). Don't include buttons, icons/SVGs, or images inside a marked
-  region — the sanitizer strips anything that isn't text markup, so those
-  would be lost on the first save of that section.
-- Unmarked pages show a friendly "no editable sections" note; `churches/*`
-  pages point the user at the Google Sheet instead.
-- Rebuilding the site (`npm run build`) bakes the markers into the HTML;
-  nothing else to configure.
+Buttons, icons/SVGs, images, forms, embeds, scripts, and navigation inside
+a section appear in the editor as small locked chips (🔒 button, 🔒 icon…).
+They cannot be edited, and on save the **originals are re-extracted from
+the live file and put back** — even if a chip was deleted in the browser,
+the real element is restored (order preserved). User input can never
+define, alter, or remove these elements; it can only edit the text around
+them.
 
 ### Saving & sanitization
 
-- Submitted rich text passes a strict server-side whitelist: only
-  `p br strong em b i u s a ul ol li h1–h4 blockquote span`; only `class`,
-  harmless `style` values, and safe `href`s (`http/https/mailto/tel/`
-  relative — never `javascript:`) survive; `script/style/svg/iframe/img/…`
-  are dropped, unknown wrappers are unwrapped, and event-handler attributes
-  never pass because attributes are copied from a whitelist.
+- Submitted rich text passes a server-side whitelist: text/structure tags
+  (`p br headings lists a strong em span div section article figure …`)
+  with only harmless attributes (`id`, `class`, safe `style`, `data-*`,
+  `aria-*`, safe `href`). User-typed `script`/`iframe`/`img`/event handlers
+  and `javascript:` links are stripped. The rich-text UI is a small
+  vendored `contenteditable` toolbar (editor.js) — no CDN, no npm.
 - Every write: timestamped backup to `editor/._backups/` (last 10 per page,
-  pruned) → temp file → atomic `rename()`. A failed save can't corrupt a
-  page. Page saves also carry a file hash so a form opened before an
-  external change can't clobber it.
+  microsecond-unique names) → temp file → atomic `rename()`. Page saves
+  carry a file hash so a stale form can't clobber newer changes. An empty
+  submission is treated as "no change" — it can never blank a section.
 - Requires PHP 8.0+ (Hostinger's defaults are newer). The first save of a
   page applies two harmless serializer normalizations (a newline after the
   doctype, lowercased SVG attribute names) — valid HTML, no rendering

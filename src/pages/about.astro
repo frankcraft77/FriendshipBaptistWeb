@@ -12,9 +12,9 @@ import * as MissionVision from '../content/mission-vision.md';
   title={`About — ${ASSOCIATION.name}`}
   description={`About the ${ASSOCIATION.name}: Southern Baptist churches serving Blount County, Alabama since ${ASSOCIATION.organized}.`}
 >
-  <section class="section-tight band">
+  <section data-edit-label="Top of page — headline and intro" class="section-tight band">
     <div class="container">
-      <div class="contents" data-edit-section="Top of page — headline and intro">
+      <div class="contents">
       <p class="eyebrow">About us</p>
       <h1>One family of churches, one mission</h1>
       <p class="lede">
@@ -26,7 +26,7 @@ import * as MissionVision from '../content/mission-vision.md';
   </section>
 
   {/* ── Welcome letter ── */}
-  <section class="section">
+  <section data-edit-label="Welcome letter" class="section">
     <div class="container container-narrow">
       <div class="flex items-start gap-6 mb-8">
         <div class="avatar-placeholder w-24 h-24 shrink-0 font-ui text-2xl" aria-hidden="true">DW</div>
@@ -38,7 +38,7 @@ import * as MissionVision from '../content/mission-vision.md';
           <p class="font-ui text-[0.9rem] muted !m-0">{ASSOCIATION.amsTitle}</p>
         </div>
       </div>
-      <div class="prose" data-edit-section="Welcome letter">
+      <div class="prose">
         <Letter.Content />
       </div>
       {SAMPLE_CONTENT && (
@@ -51,39 +51,39 @@ import * as MissionVision from '../content/mission-vision.md';
   </section>
 
   {/* ── Mission & vision ── */}
-  <section class="band-accent section-tight">
+  <section data-edit-label="Mission and vision (blue band)" class="band-accent section-tight">
     <div class="container container-narrow text-center">
       <p class="eyebrow">Mission &amp; vision {SAMPLE_CONTENT && '— draft for review'}</p>
-      <div class="prose mx-auto text-[1.15rem]" data-edit-section="Mission and vision statement">
+      <div class="prose mx-auto text-[1.15rem]">
         <MissionVision.Content />
       </div>
     </div>
   </section>
 
   {/* ── Who we are ── */}
-  <section class="section">
+  <section data-edit-label="Our story" class="section">
     <div class="container container-narrow">
       <p class="eyebrow">Who we are</p>
       <h2>Our story</h2>
-      <div class="prose" data-edit-section="Our story">
+      <div class="prose">
         <WhoWeAre.Content />
       </div>
     </div>
   </section>
 
   {/* ── What is an association? ── */}
-  <section class="section band">
+  <section data-edit-label="What is a Baptist association?" class="section band">
     <div class="container container-narrow">
       <p class="eyebrow">Good question</p>
       <h2>What is a Baptist association?</h2>
-      <div class="prose" data-edit-section="What is a Baptist association?">
+      <div class="prose">
         <Explainer.Content />
       </div>
     </div>
   </section>
 
   {/* ── Officers & staff ── */}
-  <section class="section">
+  <section data-edit-label="Officers and staff" class="section">
     <div class="container">
       <p class="eyebrow">Officers &amp; staff</p>
       <h2>Who serves the association</h2>

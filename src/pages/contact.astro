@@ -10,9 +10,9 @@ const hasFormHandler = !!ENV.contactFormEndpoint;
   title={`Contact — ${ASSOCIATION.name}`}
   description={`Contact the ${ASSOCIATION.name} office in ${ASSOCIATION.officeCity}.`}
 >
-  <section class="section-tight band">
+  <section data-edit-label="Top of page — headline and intro" class="section-tight band">
     <div class="container">
-      <div class="contents" data-edit-section="Top of page — headline and intro">
+      <div class="contents">
       <p class="eyebrow">Contact</p>
       <h1>We'd love to hear from you</h1>
       <p class="lede">
@@ -23,11 +23,11 @@ const hasFormHandler = !!ENV.contactFormEndpoint;
     </div>
   </section>
 
-  <section class="section">
+  <section data-edit-label="Office details and contact form" class="section">
     <div class="container grid gap-10 lg:grid-cols-2">
       <div>
         <h2 class="!text-[1.7rem]">The association office</h2>
-        <ul class="list-none p-0 m-0 mt-5 space-y-3 font-ui" data-edit-section="Office contact details">
+        <ul class="list-none p-0 m-0 mt-5 space-y-3 font-ui">
           <li>
             <strong>Address:</strong> {ASSOCIATION.officeAddress}
           </li>

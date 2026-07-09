@@ -145,6 +145,8 @@ function render_rich_field(string $id, string $label, string $html): void
     echo '<div class="rte-toolbar" data-for="' . e($id) . '">';
     echo '<button type="button" data-cmd="bold" title="Bold"><strong>B</strong></button>';
     echo '<button type="button" data-cmd="italic" title="Italic"><em>I</em></button>';
+    echo '<button type="button" data-cmd="formatH2" title="Heading">Heading</button>';
+    echo '<button type="button" data-cmd="formatP" title="Normal text">Normal</button>';
     echo '<button type="button" data-cmd="insertUnorderedList" title="Bulleted list">&bull; list</button>';
     echo '<button type="button" data-cmd="createLink" title="Add a link">link</button>';
     echo '<button type="button" data-cmd="removeFormat" title="Remove formatting">clear</button>';
@@ -218,8 +220,9 @@ if ($action === 'edit') {
         exit;
     }
 
+    $isChurchPage = str_starts_with($rel, 'churches/');
     [$dom, $filehash] = load_page_dom($abs);
-    $fields = collect_section_fields($dom);
+    $fields = $isChurchPage ? [] : collect_page_fields($dom);
     $niceName = page_friendly_name($abs, $rel);
     $hasBackups = count(backups_for($rel)) > 0;
 
@@ -232,15 +235,16 @@ if ($action === 'edit') {
     show_messages($notice, $error);
 
     if (!$fields) {
-        if (str_starts_with($rel, 'churches/')) {
+        if ($isChurchPage) {
             echo '<div class="msg msg-ok" style="background:#eef2f7;border-color:#b9c6d8;color:#2c3542;">';
             echo 'This church page is built from the <strong>church spreadsheet</strong> — to change its text, edit that church\'s row in the Google Sheet and rebuild the site (see the main README). That way the change is permanent.';
             echo '</div>';
         } else {
-            echo '<p>This page has no editable text sections yet. Ask your developer to mark the sections that should be editable (see README-EDITOR.md).</p>';
+            echo '<p>This page is edited elsewhere — it has no regular text content of its own.</p>';
         }
     } else {
         echo '<form method="post" action="index.php?action=save" id="edit-form">';
+        echo '<noscript><p class="msg msg-bad">This editor needs JavaScript turned on to save changes.</p></noscript>';
         echo '<input type="hidden" name="csrf" value="' . e(csrf_token()) . '">';
         echo '<input type="hidden" name="page" value="' . e($rel) . '">';
         echo '<input type="hidden" name="filehash" value="' . e($filehash) . '">';
@@ -281,12 +285,30 @@ echo '<strong>Header &amp; footer</strong>';
 echo '<span>Text that repeats on every page — edited here once</span>';
 echo '</a></li>';
 
-foreach (list_pages() as $p) {
+$allPages = list_pages();
+foreach ($allPages as $p) {
+    if ($p['sheet_managed']) {
+        continue;
+    }
     echo '<li><a href="index.php?action=edit&page=' . rawurlencode($p['rel']) . '">';
     echo '<strong>' . e($p['name']) . '</strong>';
     echo '<span>' . e($p['where']) . '</span>';
     echo '</a></li>';
 }
 echo '</ul>';
+
+$churchPages = array_filter($allPages, fn($p) => $p['sheet_managed']);
+if ($churchPages) {
+    echo '<h2 class="grouphead">Church pages</h2>';
+    echo '<p class="hint">These are built from the church spreadsheet — edit a church\'s row in the Google Sheet (and rebuild) to change them.</p>';
+    echo '<ul class="pagelist pagelist-muted">';
+    foreach ($churchPages as $p) {
+        echo '<li><a href="index.php?action=edit&page=' . rawurlencode($p['rel']) . '">';
+        echo '<strong>' . e($p['name']) . '</strong>';
+        echo '<span>edited in the church spreadsheet</span>';
+        echo '</a></li>';
+    }
+    echo '</ul>';
+}
 echo '</main>';
 page_foot();

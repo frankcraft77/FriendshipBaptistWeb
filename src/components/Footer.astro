@@ -3,9 +3,9 @@ import { ASSOCIATION, SAMPLE_CONTENT } from '../config';
 const year = new Date().getFullYear();
 ---
 
-<footer class="site-footer">
+<footer class="site-footer" data-edit-shared="footer" data-edit-label="Footer (bottom of every page)">
   <div class="container py-12 grid gap-10 md:grid-cols-3">
-    <div data-edit-shared="footer-about" data-edit-label="Footer — about the association (bottom of every page)">
+    <div>
       <h3>Friendship Baptist Association</h3>
       <p class="mt-3 leading-relaxed">
         {ASSOCIATION.churchCount} Southern Baptist churches serving Blount County,
@@ -38,8 +38,6 @@ const year = new Date().getFullYear();
   <div class="border-t border-white/15">
     <div
       class="container py-5 text-sm flex flex-col sm:flex-row justify-between gap-2 opacity-80"
-      data-edit-shared="footer-bottom"
-      data-edit-label="Footer — copyright line (bottom of every page)"
     >
       <span>&copy; {year} {ASSOCIATION.name}. All rights reserved.</span>
       <span>Affiliated with the Alabama Baptist State Convention &amp; the Southern Baptist Convention</span>

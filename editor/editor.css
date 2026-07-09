@@ -152,6 +152,33 @@ input:focus, textarea:focus {
   border-color: #c9b68d;
 }
 
+/* Locked chips: stand-ins for buttons, icons, forms, maps — not editable. */
+.edit-locked {
+  display: inline-block;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #5d6b7c;
+  background: #e8e0d0;
+  border: 1px dashed #b3a483;
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  margin: 0 0.15rem;
+  user-select: none;
+  cursor: not-allowed;
+  vertical-align: baseline;
+}
+.edit-locked::before { content: "🔒 "; font-size: 0.65rem; }
+
+/* Muted group in the page picker (church pages) */
+.grouphead {
+  font-family: Georgia, serif;
+  font-size: 1.25rem;
+  margin: 2.5rem 0 0.25rem;
+}
+.pagelist-muted a { opacity: 0.75; }
+
 /* Buttons — big and obvious */
 .btn {
   display: inline-block;

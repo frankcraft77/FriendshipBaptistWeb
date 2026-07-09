@@ -16,14 +16,14 @@ const fmtDate = (d: string) =>
 ---
 
 <Base title={`${frontmatter.title} — ${ASSOCIATION.name}`} description={frontmatter.excerpt}>
-  <article class="section">
+  <article class="section" data-edit-label="Article">
     <div class="container container-narrow">
       <p class="font-ui text-[0.85rem] muted !mb-3">
         <a href="/news/">← All news</a> · {fmtDate(frontmatter.date)}
         {SAMPLE_CONTENT && frontmatter.sample && <span class="tag-sample ml-2">sample post</span>}
       </p>
       <h1 class="!text-[2.6rem]">{frontmatter.title}</h1>
-      <div class="prose mt-6" data-edit-section="Article text">
+      <div class="prose mt-6">
         <Content />
       </div>
     </div>

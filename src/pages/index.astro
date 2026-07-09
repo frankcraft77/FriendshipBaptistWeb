@@ -13,12 +13,12 @@ const previewChurches = churches.slice(0, 3);
 
 <Base title={`${ASSOCIATION.name} — Churches together for Blount County, Alabama`}>
   {/* ── Typographic hero (no photo required) ── */}
-  <section
+  <section data-edit-label="Top of page — headline and intro"
     class="section"
     style="background: linear-gradient(175deg, color-mix(in srgb, var(--accent), transparent 93%), var(--bg) 55%);"
   >
     <div class="container text-center flex flex-col items-center fade-in-up" style="padding-block: 2.5rem;">
-      <div class="contents" data-edit-section="Top of page — headline and intro">
+      <div class="contents">
       <p class="eyebrow">{ASSOCIATION.churchCount} Southern Baptist churches · Blount County, Alabama · since {ASSOCIATION.organized}</p>
       <h1 class="max-w-[17ch]">Churches together, for Blount County and the world</h1>
       <p class="lede mt-4 mx-auto">
@@ -38,9 +38,9 @@ const previewChurches = churches.slice(0, 3);
   </section>
 
   {/* ── Mission band ── */}
-  <section class="band-accent section-tight">
+  <section data-edit-label="Mission statement (blue band)" class="band-accent section-tight">
     <div class="container text-center">
-      <p class="font-display text-[clamp(1.5rem,3.5vw,2.2rem)] leading-snug !m-0" style="font-family: var(--font-display);" data-edit-section="Mission statement (blue band)">
+      <p class="font-display text-[clamp(1.5rem,3.5vw,2.2rem)] leading-snug !m-0" style="font-family: var(--font-display);">
         Helping our churches help each other reach Blount County —<br class="hidden md:block" />
         and the world — with the gospel.
       </p>
@@ -49,9 +49,9 @@ const previewChurches = churches.slice(0, 3);
   </section>
 
   {/* ── What we do ── */}
-  <section class="section">
+  <section data-edit-label="What we do" class="section">
     <div class="container">
-      <div class="contents" data-edit-section="What we do — heading">
+      <div class="contents">
       <p class="eyebrow">What we do</p>
       <h2 class="max-w-[24ch]">Stronger together than any church could be alone</h2>
       </div>
@@ -61,7 +61,7 @@ const previewChurches = churches.slice(0, 3);
             <span class="inline-flex items-center justify-center w-11 h-11 rounded-xl mb-4" style="background: color-mix(in srgb, var(--accent), transparent 88%); color: var(--accent);">
               <Icon name={h.icon} />
             </span>
-            <div class="contents" data-edit-section={`What we do — card: ${h.title}`}>
+            <div class="contents">
             <h3 class="!text-[1.25rem] !mb-2">{h.title}</h3>
             <p class="font-ui text-[0.92rem] muted !m-0">{h.text}</p>
             </div>
@@ -72,7 +72,7 @@ const previewChurches = churches.slice(0, 3);
   </section>
 
   {/* ── Welcome from the AMS ── */}
-  <section class="section band">
+  <section data-edit-label="Welcome from the AMS" class="section band">
     <div class="container container-narrow">
       <div class="flex flex-col sm:flex-row gap-8 items-start">
         <div class="avatar-placeholder w-28 h-28 shrink-0 font-ui text-3xl" aria-hidden="true">DW</div>
@@ -81,7 +81,7 @@ const previewChurches = churches.slice(0, 3);
             A welcome from our {ASSOCIATION.amsTitle}
             {SAMPLE_CONTENT && <span class="tag-sample ml-2">sample</span>}
           </p>
-          <div class="prose text-[1.1rem]" data-edit-section="Welcome message from the AMS">
+          <div class="prose text-[1.1rem]">
             <Welcome.Content />
           </div>
           <p class="font-ui mt-4 !mb-0">
@@ -95,11 +95,11 @@ const previewChurches = churches.slice(0, 3);
   </section>
 
   {/* ── Church preview strip ── */}
-  <section class="section">
+  <section data-edit-label="Our churches preview" class="section">
     <div class="container container-wide">
       <div class="flex flex-wrap items-end justify-between gap-4 mb-10">
         <div>
-          <div class="contents" data-edit-section="Our churches — heading">
+          <div class="contents">
           <p class="eyebrow">Our churches</p>
           <h2 class="!mb-0">A church family near you</h2>
           </div>
@@ -117,9 +117,9 @@ const previewChurches = churches.slice(0, 3);
   </section>
 
   {/* ── Find-a-church CTA ── */}
-  <section class="band-accent section">
+  <section data-edit-label="Bottom banner — find a church" class="band-accent section">
     <div class="container text-center">
-      <div class="contents" data-edit-section="Bottom banner">
+      <div class="contents">
       <h2 class="!mb-3">Looking for a church home?</h2>
       <p class="font-ui max-w-[52ch] mx-auto opacity-90 !mb-7">
         Type your address and we'll show you the closest congregations — or

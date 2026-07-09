@@ -18,10 +18,39 @@ document.querySelectorAll('.rte-toolbar').forEach(function (bar) {
       if (cmd === 'createLink') {
         var url = window.prompt('Type the web address for the link (e.g. https://example.org):');
         if (url) document.execCommand('createLink', false, url);
+      } else if (cmd === 'formatH2') {
+        document.execCommand('formatBlock', false, '<h2>');
+      } else if (cmd === 'formatP') {
+        document.execCommand('formatBlock', false, '<p>');
       } else {
         document.execCommand(cmd, false, null);
       }
     });
+  });
+});
+
+// Locked chips ([button], [icon], …) stand in for parts of the page that
+// can't be edited. Guard against accidentally deleting one with Backspace/
+// Delete right next to it. (If one is removed anyway — e.g. deleting a
+// selection around it — the server puts the real element back on save.)
+document.querySelectorAll('.rte').forEach(function (rte) {
+  rte.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Backspace' && ev.key !== 'Delete') return;
+    var sel = window.getSelection();
+    if (!sel || !sel.isCollapsed || sel.rangeCount === 0) return;
+    var range = sel.getRangeAt(0);
+    var node = range.startContainer;
+    var offset = range.startOffset;
+    var neighbor = null;
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (ev.key === 'Backspace' && offset === 0) neighbor = node.previousSibling;
+      if (ev.key === 'Delete' && offset === node.textContent.length) neighbor = node.nextSibling;
+    } else if (node.childNodes.length) {
+      neighbor = ev.key === 'Backspace' ? node.childNodes[offset - 1] : node.childNodes[offset];
+    }
+    if (neighbor && neighbor.nodeType === Node.ELEMENT_NODE && neighbor.classList.contains('edit-locked')) {
+      ev.preventDefault();
+    }
   });
 });
 

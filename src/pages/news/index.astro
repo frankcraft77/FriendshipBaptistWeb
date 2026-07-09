@@ -20,9 +20,9 @@ const fmtDate = (d: string) =>
   title={`News & Updates — ${ASSOCIATION.name}`}
   description="News and ministry updates from around the Friendship Baptist Association."
 >
-  <section class="section-tight band">
+  <section data-edit-label="Top of page — headline and intro" class="section-tight band">
     <div class="container">
-      <div class="contents" data-edit-section="Top of page — headline and intro">
+      <div class="contents">
       <p class="eyebrow">News &amp; updates</p>
       <h1>From around the association</h1>
       <p class="lede">
@@ -32,7 +32,7 @@ const fmtDate = (d: string) =>
     </div>
   </section>
 
-  <section class="section">
+  <section data-edit-label="News posts" class="section">
     <div class="container container-narrow flex flex-col gap-6">
       {posts.map((p) => (
         <a class="card card-hover no-underline" href={`/news/${p.slug}/`}>

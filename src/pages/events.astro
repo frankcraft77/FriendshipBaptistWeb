@@ -14,9 +14,9 @@ const calendarSrc = ENV.calendarId
   title={`Events — ${ASSOCIATION.name}`}
   description="Associational gatherings, trainings, and special services across the Friendship Baptist Association."
 >
-  <section class="section-tight band">
+  <section data-edit-label="Top of page — headline and intro" class="section-tight band">
     <div class="container">
-      <div class="contents" data-edit-section="Top of page — headline and intro">
+      <div class="contents">
       <p class="eyebrow">Events</p>
       <h1>What's coming up</h1>
       <p class="lede">
@@ -26,7 +26,7 @@ const calendarSrc = ENV.calendarId
     </div>
   </section>
 
-  <section class="section-tight">
+  <section data-edit-label="Calendar" class="section-tight">
     <div class="container">
       {calendarSrc ? (
         <div class="rounded-[var(--radius)] overflow-hidden border" style="border-color: var(--card-border);">
@@ -48,9 +48,9 @@ const calendarSrc = ENV.calendarId
     </div>
   </section>
 
-  <section class="section">
+  <section data-edit-label="Typical annual events" class="section">
     <div class="container">
-      <div class="contents" data-edit-section="Typical annual events — heading">
+      <div class="contents">
       <p class="eyebrow">Typical annual events {SAMPLE_CONTENT && <span class="tag-sample ml-2">samples</span>}</p>
       <h2>What to expect through the year</h2>
       </div>
@@ -60,7 +60,7 @@ const calendarSrc = ENV.calendarId
             <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl mb-4" style="background: color-mix(in srgb, var(--accent), transparent 88%); color: var(--accent);">
               <Icon name="calendar" class="w-5 h-5" />
             </span>
-            <div class="contents" data-edit-section={`Event card: ${e.title}`}>
+            <div class="contents">
             <h3 class="!text-[1.25rem] !mb-2">{e.title}</h3>
             <p class="font-ui text-[0.85rem] !mb-1"><strong>When:</strong> {e.when}</p>
             <p class="font-ui text-[0.85rem] !mb-3"><strong>Where:</strong> {e.where}</p>
